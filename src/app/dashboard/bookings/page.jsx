@@ -69,7 +69,7 @@ export default function BookingsPage() {
         animate="visible"
         custom={1}
         variants={fadeUp}
-        className="flex items-center gap-3 flex-wrap"
+        className="flex flex-col sm:flex-row gap-3"
       >
         <BookingSearchBar onSearch={handleSearch} />
       </motion.div>
@@ -82,7 +82,7 @@ export default function BookingsPage() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-center items-center py-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 justify-center items-center py-6"
         >
           {filteredBookings.length === 0 ? (
             <p className="text-center text-gray-500 col-span-full">

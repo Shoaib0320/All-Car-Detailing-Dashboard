@@ -66,7 +66,7 @@ export default function UsersPage() {
         animate="visible"
         custom={1}
         variants={fadeUp}
-        className="flex items-center gap-3 flex-wrap"
+        className="flex flex-col sm:flex-row gap-3"
       >
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -83,7 +83,7 @@ export default function UsersPage() {
         animate="visible"
         custom={2}
         variants={fadeUp}
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
       >
         <Card className="shadow-sm hover:shadow-md transition">
           <CardHeader>
@@ -128,7 +128,7 @@ export default function UsersPage() {
 
       <Separator />
 
-      {/* User List Table */}
+      {/* User List */}
       <motion.div
         initial="hidden"
         animate="visible"
@@ -137,7 +137,43 @@ export default function UsersPage() {
         className="space-y-4"
       >
         <h2 className="text-xl font-semibold">All Users</h2>
-        <div className="overflow-hidden rounded-xl border">
+
+        {/* Mobile Card View */}
+        <div className="block sm:hidden space-y-4">
+          {users.map((user, index) => (
+            <motion.div
+              key={index}
+              custom={index}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
+              className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="font-medium text-gray-900">{user.name}</h3>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    user.status === "Active"
+                      ? "bg-green-100 text-green-700"
+                      : user.status === "Pending"
+                      ? "bg-yellow-100 text-yellow-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {user.status}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 mb-1">{user.email}</p>
+              <p className="text-sm text-gray-500 mb-3">{user.role}</p>
+              <Button variant="ghost" size="sm">
+                Edit
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto rounded-xl border">
           <table className="min-w-full bg-white text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>

@@ -113,23 +113,23 @@ export default function SettingsPage() {
             <CardDescription>Update your personal details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="John Doe" />
+                <Input id="name" placeholder="John Doe" className="w-full" />
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="john@example.com" />
+                <Input id="email" type="email" placeholder="john@example.com" className="w-full" />
               </div>
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="********" />
+              <Input id="password" type="password" placeholder="********" className="w-full" />
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="ml-auto">Save Changes</Button>
+            <Button className="w-full sm:w-auto ml-auto">Save Changes</Button>
           </CardFooter>
         </Card>
       </motion.div>

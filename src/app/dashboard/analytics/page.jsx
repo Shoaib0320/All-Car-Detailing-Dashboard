@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
         animate="visible"
         custom={1}
         variants={fadeUp}
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
       >
         <Card className="shadow-sm hover:shadow-md transition">
           <CardHeader>
@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
         animate="visible"
         custom={2}
         variants={fadeUp}
-        className="grid grid-cols-1 xl:grid-cols-2 gap-6"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       >
         {/* Line Chart: Bookings Trend */}
         <Card className="shadow-sm hover:shadow-md transition">

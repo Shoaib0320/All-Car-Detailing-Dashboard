@@ -90,7 +90,7 @@ export default function ContactsPage() {
         animate="visible"
         custom={1}
         variants={fadeUp}
-        className="flex items-center gap-3 flex-wrap"
+        className="flex flex-col sm:flex-row gap-3"
       >
         <BookingSearchBar
           onSearch={handleSearch}
@@ -106,11 +106,11 @@ export default function ContactsPage() {
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-center items-center py-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 justify-center items-center py-6"
         >
           {filteredContacts.length === 0 ? (
             <p className="text-center text-gray-500 col-span-full">
-              No results found for <strong>{search}</strong>.
+              No results found for 
             </p>
           ) : (
             filteredContacts.map((contact, index) => (
@@ -164,55 +164,149 @@ export default function ContactsPage() {
 
           <Separator />
 
-          {/* Contact Messages Table */}
-          <DataTable
-            title="Recent Messages"
-            icon={MessageSquare}
-            loading={loading}
-            data={contacts}
-            columns={[
-              { key: "name", label: "Name" },
-              { key: "email", label: "Email" },
-              {
-                key: "message",
-                label: "Message",
-                render: (c) => {
-                  if (!c.message) return "No message";
-                  const words = c.message.split(" ");
-                  return (
-                    words.slice(0, 4).join(" ") +
-                    (words.length > 4 ? "..." : "")
-                  );
-                },
-              },
-              {
-                key: "status",
-                label: "Status",
-                render: (c) => (
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${
-                      c.status === "New"
-                        ? "bg-blue-100 text-blue-700"
-                        : c.status === "In Progress"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
+          {/* Contact Messages */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            custom={3}
+            variants={fadeUp}
+            className="space-y-4"
+          >
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Recent Messages
+            </h2>
+
+            {/* Mobile Card View */}
+            <div className="block sm:hidden space-y-4">
+              {loading ? (
+                <div className="text-center py-8">
+                  <Loader className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p>Loading contacts...</p>
+                </div>
+              ) : contacts.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">
+                  No contacts found.
+                </p>
+              ) : (
+                contacts.map((contact, index) => (
+                  <motion.div
+                    key={contact._id}
+                    custom={index}
+                    initial="hidden"
+                    animate="visible"
+                    variants={fadeUp}
+                    className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition"
                   >
-                    {c.status}
-                  </span>
-                ),
-              },
-              {
-                label: "Action",
-                align: "right",
-                render: (c) => (
-                  <Button variant="ghost" size="sm">
-                    View
-                  </Button>
-                ),
-              },
-            ]}
-          />
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-gray-900">
+                        {contact.name}
+                      </h3>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          contact.status === "New"
+                            ? "bg-blue-100 text-blue-700"
+                            : contact.status === "In Progress"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {contact.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">
+                      {contact.email}
+                    </p>
+                    <p className="text-sm text-gray-500 mb-3">
+                      {contact.message
+                        ? contact.message.length > 50
+                          ? contact.message.substring(0, 50) + "..."
+                          : contact.message
+                        : "No message"}
+                    </p>
+                    <Button variant="ghost" size="sm">
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  </motion.div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto rounded-xl border">
+              <table className="min-w-full bg-white text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium">Name</th>
+                    <th className="text-left px-4 py-3 font-medium">Email</th>
+                    <th className="text-left px-4 py-3 font-medium">Message</th>
+                    <th className="text-left px-4 py-3 font-medium">Status</th>
+                    <th className="text-right px-4 py-3 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8">
+                        <Loader className="h-6 w-6 animate-spin mx-auto mb-2" />
+                        Loading contacts...
+                      </td>
+                    </tr>
+                  ) : contacts.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 text-gray-500">
+                        No contacts found.
+                      </td>
+                    </tr>
+                  ) : (
+                    contacts.map((contact, index) => (
+                      <motion.tr
+                        key={contact._id}
+                        custom={index}
+                        initial="hidden"
+                        animate="visible"
+                        variants={fadeUp}
+                        className="border-t hover:bg-gray-50 transition"
+                      >
+                        <td className="px-4 py-3 font-medium">
+                          {contact.name}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {contact.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          {contact.message
+                            ? contact.message.length > 50
+                              ? contact.message.substring(0, 50) + "..."
+                              : contact.message
+                            : "No message"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              contact.status === "New"
+                                ? "bg-blue-100 text-blue-700"
+                                : contact.status === "In Progress"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
+                          >
+                            {contact.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button variant="ghost" size="sm">
+                            View
+                          </Button>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
         </>
       )}
     </div>

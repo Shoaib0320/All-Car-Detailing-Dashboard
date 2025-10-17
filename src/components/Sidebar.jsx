@@ -10,7 +10,8 @@ import {
   Phone,
   CalendarDays,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useMediaQuery } from "react-responsive";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -24,10 +25,15 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+export default function Sidebar({ collapsed, setCollapsed }) {
   const [openMobile, setOpenMobile] = useState(false);
   const pathname = usePathname();
+  const isMobile = useMediaQuery({ maxWidth: 1023 });
+
+  // Close mobile sidebar when page loads/changes
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname]);
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: Home },
@@ -50,29 +56,19 @@ export default function Sidebar() {
 
       <motion.aside
         initial={{ width: 80 }}
-        animate={{ width: collapsed ? 80 : 240 }}
+        animate={{ width: openMobile ? "80vw" : (collapsed ? 80 : 240) }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed lg:static z-40 flex flex-col h-screen bg-white border-r shadow-sm",
+          "fixed z-40 flex flex-col h-full bg-white border-r shadow-sm text-black",
           openMobile ? "left-0" : "-left-80",
-          "lg:left-0"
+          "lg:left-0 lg:top-0 lg:h-screen"
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4">
-          {!collapsed && (
-            <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
-              My<span className="text-blue-600">Dashboard</span>
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="hover:bg-gray-100"
-          >
-            <Menu size={20} />
-          </Button>
+        <div className="flex items-center justify-center p-4">
+          <span className="text-xl font-semibold tracking-tight whitespace-nowrap">
+            My<span className="text-blue-600">Dashboard</span>
+          </span>
         </div>
 
         <Separator />
@@ -90,15 +86,15 @@ export default function Sidebar() {
                       "flex items-center w-full rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                       collapsed ? "justify-center" : "justify-start",
                       isActive
-                        ? "bg-blue-100 text-blue-600"
-                        : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                        ? "bg-blue-100 text-black"
+                        : "text-black hover:bg-blue-50 hover:text-gray-800"
                     )}
                   >
                     <item.icon
                       size={20}
-                      className={cn("shrink-0", collapsed ? "mr-0" : "mr-2")}
+                      className={cn("shrink-0", collapsed ? "mr-2" : "mr-0")}
                     />
-                    {!collapsed && <span>{item.label}</span>}
+                    {(isMobile || !collapsed) && <span className="inline">{item.label}</span>}
                   </Link>
                 </TooltipTrigger>
                 {collapsed && (
@@ -113,9 +109,9 @@ export default function Sidebar() {
 
         {/* Footer */}
         <div className="p-3">
-          <button className="flex items-center w-full text-sm text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg px-3 py-2 transition">
-            <LogOut size={18} className="mr-2" />
-            {!collapsed && "Logout"}
+          <button className="flex items-center justify-center w-full text-sm text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg px-3 py-2 transition">
+            <LogOut size={18} className={cn("mr-2", collapsed && "mr-0")} />
+            {(isMobile || !collapsed) && <span className="inline">Logout</span>}
           </button>
         </div>
       </motion.aside>
@@ -127,7 +123,17 @@ export default function Sidebar() {
         className="fixed top-4 left-4 z-50 lg:hidden"
         onClick={() => setOpenMobile(!openMobile)}
       >
-        <Menu />
+        <Menu size={20} />
+      </Button>
+
+      {/* Desktop Toggle Button */}
+      <Button
+        variant="outline"
+        size="icon"
+        className="fixed top-4 left-4 z-50 hidden lg:flex"
+        onClick={() => setCollapsed(!collapsed)}
+      >
+        <Menu size={20} />
       </Button>
     </TooltipProvider>
   );

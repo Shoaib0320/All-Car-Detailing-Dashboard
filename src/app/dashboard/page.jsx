@@ -38,8 +38,41 @@ export default function DashboardPage() {
             />
       <Separator />
 
+      {/* Quick Actions */}
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        custom={4}
+        variants={fadeUp}
+      >
+        <Card className="shadow-sm hover:shadow-md transition-all">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Common tasks to get you started</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" size="sm">
+                <Users className="h-4 w-4 mr-2" />
+                Add User
+              </Button>
+              <Button variant="outline" size="sm">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                New Booking
+              </Button>
+              <Button variant="outline" size="sm">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                View Analytics
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <Separator />
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {[
           {
             title: "Total Users",
@@ -96,12 +129,12 @@ export default function DashboardPage() {
         variants={fadeUp}
         className="space-y-4"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-xl font-semibold">Recent Activity</h2>
           <Button variant="outline" size="sm">View All</Button>
         </div>
 
-        <div className="overflow-hidden rounded-xl border">
+        <div className="overflow-x-auto rounded-xl border">
           <table className="min-w-full bg-white text-sm">
             <thead className="bg-gray-50 text-gray-600">
               <tr>

@@ -123,7 +123,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { AnimatePresence, motion } from "framer-motion";
 
-export default function Topbar() {
+export default function Topbar({ collapsed }) {
   const [showNoti, setShowNoti] = useState(false);
 
   const notifications = [
@@ -144,20 +144,20 @@ export default function Topbar() {
   ];
 
   return (
-    <header className="flex items-center justify-between bg-white shadow-sm rounded-lg px-4 py-3 mb-6 sticky top-0 z-30">
+    <header className={`flex items-center justify-between bg-white shadow-sm rounded-lg px-4 py-3 fixed top-0 left-0 right-0 z-30 ${collapsed ? 'lg:ml-20' : 'lg:ml-60'} lg:px-6`}>
       {/* Left Section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 lg:gap-10">
         <Button variant="ghost" size="icon" className="lg:hidden">
           <Menu size={20} />
         </Button>
 
-        <h1 className="text-xl font-semibold tracking-tight hidden sm:block">
+        <h1 className="text-lg lg:text-xl font-semibold tracking-tight">
           Dashboard
         </h1>
       </div>
 
       {/* Center Section (Search Bar) */}
-      <div className="flex-1 max-w-md mx-4 hidden sm:flex">
+      <div className="flex-1 max-w-md mx-4 hidden md:flex">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -168,7 +168,7 @@ export default function Topbar() {
       </div>
 
       {/* Right Section */}
-      <div className="flex items-center gap-4 relative">
+      <div className="flex items-center gap-2 lg:gap-4 relative">
         {/* 🔔 Notifications */}
         <div className="relative">
           <Button
