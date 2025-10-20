@@ -103,7 +103,8 @@ const BookingSchema = new mongoose.Schema(
 );
 
 // 🔹 Hot reload safe model export
-const Booking =
-  mongoose.models.Booking || mongoose.model("Booking", BookingSchema);
+// const Booking =
+//   mongoose.models.Booking || mongoose.model("Booking", BookingSchema);
 
-export default Booking;
+export default Booking =
+  mongoose.models.Booking || mongoose.model("Booking", BookingSchema);

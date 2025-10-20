@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import ContactMessage from "@/models/Contact";
-import connectDB from "@/database/mongodb";
-
+import ContactMessage from '@/Models/Contact'
+import connectDB from "@/lib/mongodb";
 /**
  * ✅ CORS Headers — used for every response
  */
