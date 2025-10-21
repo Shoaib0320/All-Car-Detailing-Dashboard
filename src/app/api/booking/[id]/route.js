@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/database/mongodb";
 import Booking from "@/models/Booking";
+import connectDB from "@/lib/mongodb";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

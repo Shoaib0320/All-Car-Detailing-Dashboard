@@ -52,15 +52,15 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => window.location.href = '/dashboard/users'}>
                 <Users className="h-4 w-4 mr-2" />
                 Add User
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => window.location.href = '/dashboard/bookings'}>
                 <CalendarDays className="h-4 w-4 mr-2" />
                 New Booking
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => window.location.href = '/dashboard/analytics'}>
                 <BarChart3 className="h-4 w-4 mr-2" />
                 View Analytics
               </Button>

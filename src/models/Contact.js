@@ -25,7 +25,6 @@ const ContactMessageSchema = new mongoose.Schema(
   }
 );
 
-// Reuse model if it already exists (important for Next.js hot reload)
 const ContactMessage =
   mongoose.models.ContactMessage ||
   mongoose.model("ContactMessage", ContactMessageSchema);

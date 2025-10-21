@@ -1,10 +1,10 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
-import Topbar from "@/components/Topbar";
-import { Toaster } from "@/components/ui/sonner";
+import Sidebar from "../../../components/Sidebar";
+import Topbar from "../../../components/Topbar";
+import { Toaster } from "../../../components/ui/sonner";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../../lib/utils";
 
 export default function DashboardLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);

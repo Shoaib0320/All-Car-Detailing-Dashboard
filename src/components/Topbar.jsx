@@ -99,6 +99,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from '@/context/AuthContext';
 import {
   Bell,
   LogOut,
@@ -124,6 +125,7 @@ import { Separator } from "@/components/ui/separator";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Topbar({ collapsed }) {
+  const { user, logout } = useAuth();
   const [showNoti, setShowNoti] = useState(false);
 
   const notifications = [
@@ -234,10 +236,12 @@ export default function Topbar({ collapsed }) {
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/avatars/default.png" alt="User" />
-                <AvatarFallback>SA</AvatarFallback>
+                <AvatarFallback>
+                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <span className="hidden sm:inline text-sm font-medium">
-                Sajood Ali
+                {user?.firstName} {user?.lastName}
               </span>
             </Button>
           </DropdownMenuTrigger>
@@ -251,7 +255,10 @@ export default function Topbar({ collapsed }) {
               <Settings size={16} className="mr-2" /> Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-500">
+            <DropdownMenuItem
+              className="text-red-500"
+              onClick={logout}
+            >
               <LogOut size={16} className="mr-2" /> Logout
             </DropdownMenuItem>
           </DropdownMenuContent>

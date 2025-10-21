@@ -102,7 +102,6 @@ const BookingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔹 Hot reload safe model export
 const Booking =
   mongoose.models.Booking || mongoose.model("Booking", BookingSchema);
 
