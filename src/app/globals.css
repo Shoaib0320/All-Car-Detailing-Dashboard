@@ -76,6 +76,28 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Website Theme Colors */
+  --theme-primary: #0ea5e9; /* sky-500 */
+  --theme-primary-light: #38bdf8; /* sky-400 */
+  --theme-primary-dark: #0369a1; /* sky-700 */
+  --theme-secondary: #1e40af; /* blue-700 */
+  --theme-accent: #f8fafc; /* slate-50 */
+  --theme-accent-dark: #334155; /* slate-700 */
+  --theme-cyan: #06b6d4; /* cyan-500 */
+  --theme-cyan-light: #22d3ee; /* cyan-400 */
+  --theme-cyan-dark: #0891b2; /* cyan-600 */
+  --theme-green: #10b981; /* emerald-500 */
+  --theme-green-light: #34d399; /* emerald-400 */
+  --theme-green-dark: #059669; /* emerald-600 */
+  --theme-yellow: #f59e0b; /* amber-500 */
+  --theme-yellow-light: #fbbf24; /* amber-400 */
+  --theme-yellow-dark: #d97706; /* amber-600 */
+  --theme-red: #ef4444; /* red-500 */
+  --theme-red-light: #f87171; /* red-400 */
+  --theme-red-dark: #dc2626; /* red-600 */
+  --theme-purple: #8b5cf6; /* violet-500 */
+  --theme-purple-light: #a78bfa; /* violet-400 */
+  --theme-purple-dark: #7c3aed; /* violet-600 */
 }
 
 .dark {
@@ -118,5 +140,8 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  html {
+    scroll-behavior: smooth;
   }
 }
