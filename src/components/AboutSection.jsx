@@ -51,7 +51,7 @@ export default function AboutSection() {
           {/* Content */}
           <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-              About <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-blue-600">Globium Cloud</span>
+              About <span className="bg-gradient-to-r from-sky-400 to-sky-700 bg-clip-text text-transparent">Globium Cloud</span>
             </h2>
             <p className="text-lg text-gray-600 dark:text-slate-300 mb-6 leading-relaxed">
               We are a leading cloud solutions provider dedicated to helping businesses harness the power of cloud technology.

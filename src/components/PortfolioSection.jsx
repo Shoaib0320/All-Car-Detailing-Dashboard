@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { ExternalLink, Github } from "lucide-react";
+import { ExternalLink, Github, Eye } from "lucide-react";
 
 export default function PortfolioSection() {
   const [isVisible, setIsVisible] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -28,6 +29,7 @@ export default function PortfolioSection() {
         "A full-stack e-commerce solution with payment integration, inventory management, and analytics dashboard.",
       liveUrl: "#",
       githubUrl: "#",
+      technologies: ["React", "Node.js", "MongoDB", "Stripe"]
     },
     {
       title: "Healthcare Management System",
@@ -35,6 +37,7 @@ export default function PortfolioSection() {
         "Comprehensive healthcare platform for patient management, appointment scheduling, and medical records.",
       liveUrl: "#",
       githubUrl: "#",
+      technologies: ["Next.js", "PostgreSQL", "Docker", "AWS"]
     },
     {
       title: "Financial Dashboard",
@@ -42,6 +45,7 @@ export default function PortfolioSection() {
         "Real-time financial analytics dashboard with data visualization and automated reporting features.",
       liveUrl: "#",
       githubUrl: "#",
+      technologies: ["Vue.js", "Python", "Redis", "Chart.js"]
     },
     {
       title: "Social Media Analytics",
@@ -49,6 +53,7 @@ export default function PortfolioSection() {
         "Advanced social media monitoring and analytics platform with AI-powered insights.",
       liveUrl: "#",
       githubUrl: "#",
+      technologies: ["React", "Python", "TensorFlow", "AWS"]
     },
     {
       title: "IoT Monitoring System",
@@ -56,6 +61,7 @@ export default function PortfolioSection() {
         "Real-time IoT device monitoring and control system with predictive maintenance capabilities.",
       liveUrl: "#",
       githubUrl: "#",
+      technologies: ["Angular", "Node.js", "MQTT", "InfluxDB"]
     },
     {
       title: "Learning Management System",
@@ -63,8 +69,43 @@ export default function PortfolioSection() {
         "Complete LMS with course creation, student progress tracking, and interactive assessments.",
       liveUrl: "#",
       githubUrl: "#",
+      technologies: ["React", "Express", "MySQL", "Socket.io"]
+    },
+    {
+      title: "Real Estate Platform",
+      description:
+        "Modern real estate marketplace with virtual tours, property search, and agent management.",
+      liveUrl: "#",
+      githubUrl: "#",
+      technologies: ["Next.js", "Prisma", "PostgreSQL", "Mapbox"]
+    },
+    {
+      title: "Supply Chain Management",
+      description:
+        "End-to-end supply chain management system with inventory tracking and logistics optimization.",
+      liveUrl: "#",
+      githubUrl: "#",
+      technologies: ["React", "Python", "PostgreSQL", "Docker"]
+    },
+    {
+      title: "Fitness Tracking App",
+      description:
+        "Mobile-first fitness application with workout planning, progress tracking, and social features.",
+      liveUrl: "#",
+      githubUrl: "#",
+      technologies: ["React Native", "Firebase", "Node.js", "MongoDB"]
+    },
+    {
+      title: "Event Management Platform",
+      description:
+        "Comprehensive event management system for organizing, promoting, and tracking events.",
+      liveUrl: "#",
+      githubUrl: "#",
+      technologies: ["Vue.js", "Laravel", "MySQL", "Stripe"]
     },
   ];
+
+  const displayedProjects = showAll ? projects : projects.slice(0, 3);
 
   return (
     <section
@@ -82,7 +123,7 @@ export default function PortfolioSection() {
           >
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               Our{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-blue-600">
+              <span className="bg-gradient-to-r from-sky-400 to-sky-700 bg-clip-text text-transparent">
                 Portfolio
               </span>
             </h2>
@@ -94,7 +135,7 @@ export default function PortfolioSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {projects.map((project, index) => (
+          {displayedProjects.map((project, index) => (
             <div
               key={index}
               className={`bg-white/70 dark:bg-slate-700/70 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-sky-100 dark:border-slate-600 hover:shadow-xl transition-all duration-500 hover:transform hover:scale-105 ${
@@ -122,16 +163,16 @@ export default function PortfolioSection() {
                   {project.description}
                 </p>
 
-                {/* <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-4">
                   {project.technologies.map((tech, techIndex) => (
                     <span
                       key={techIndex}
-                      className="px-2 py-1 bg-sky-100 text-sky-700 text-xs font-medium rounded-full"
+                      className="px-2 py-1 bg-sky-100 dark:bg-slate-600 text-sky-700 dark:text-sky-300 text-xs font-medium rounded-full"
                     >
                       {tech}
                     </span>
                   ))}
-                </div> */}
+                </div>
 
                 <div className="flex gap-3">
                   <a
@@ -146,6 +187,18 @@ export default function PortfolioSection() {
             </div>
           ))}
         </div>
+
+        {!showAll && (
+          <div className="text-center mt-12">
+            <button
+              onClick={() => setShowAll(true)}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              <Eye className="w-5 h-5" />
+              See All Projects
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

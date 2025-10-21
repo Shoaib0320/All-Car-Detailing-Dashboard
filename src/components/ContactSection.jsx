@@ -69,7 +69,7 @@ export default function ContactSection() {
         <div className="text-center mb-16">
           <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Get In <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-blue-600">Touch</span>
+              Get In <span className="bg-gradient-to-r from-[var(--theme-primary-light)] to-[var(--theme-primary-dark)] bg-clip-text text-transparent">Touch</span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-slate-300 max-w-3xl mx-auto">
               Ready to transform your business with cloud solutions? Let's discuss your project and how we can help.
@@ -167,9 +167,9 @@ export default function ContactSection() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                className="w-full bg-transparent text-[var(--theme-primary-light)] font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl flex items-center justify-center gap-2 border-2 border-[var(--theme-primary-light)] hover:bg-gradient-to-r hover:from-[var(--theme-primary-light)] hover:to-[var(--theme-primary-dark)] hover:text-white"
               >
-                <Send className="w-5 h-5" />
+                <Send className="w-5 h-5 text-[var(--theme-primary-light)] hover:text-white" />
                 Send Message
               </button>
             </form>

@@ -60,7 +60,7 @@ export default function ServicesSection() {
         <div className="text-center mb-16">
           <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-blue-600">Services</span>
+              Our <span className="text-transparent bg-gradient-to-r from-sky-400 to-sky-700 bg-clip-text">Services</span>
             </h2>
             <p className="text-xl text-gray-600 dark:text-slate-300 max-w-3xl mx-auto">
               Comprehensive cloud solutions designed to transform your business operations and drive innovation.
