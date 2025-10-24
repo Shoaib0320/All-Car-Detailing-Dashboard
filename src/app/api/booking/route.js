@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import Booking from "@/Models/Booking";
+
+import Booking, { BookingStatus } from "@/models/Booking";
 import connectDB from "@/lib/mongodb";
 
 const corsHeaders = {
