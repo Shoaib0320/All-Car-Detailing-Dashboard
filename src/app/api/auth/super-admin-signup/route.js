@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/mongodb';
-import Role from '@/models/Role';
-import User from '@/models/User';
+import Role from '@/Models/Role';
+import User from '@/Models/User';
 import { generateToken, getCookieOptions } from '../../../../lib/jwt';
 
 export async function POST(request) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
-import Role from '@/models/Role';
+import Role from '@/Models/Role';
 
 // GET all roles
 export async function GET() {
