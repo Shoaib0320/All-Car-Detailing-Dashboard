@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import connectDB from '../../../../lib/mongodb';
 import { verifyToken } from '../../../../lib/jwt';
 import User from '@/models/User';
-import Role from '@/models/Role';
 
 export async function GET(request) {
   try {

@@ -25,12 +25,12 @@ import {
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
+
 export default function Sidebar({ collapsed, setCollapsed }) {
   const [openMobile, setOpenMobile] = useState(false);
   const pathname = usePathname();
   const isMobile = useMediaQuery({ maxWidth: 1023 });
 
-  // Close mobile sidebar when page loads/changes
   useEffect(() => {
     setOpenMobile(false);
   }, [pathname]);
@@ -41,12 +41,12 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     { label: "Contacts", href: "/dashboard/contacts", icon: Phone },
     { label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays },
     { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-    { label: "Settings", href: "/dashboard/settings", icon: Settings },
+    { label: "Shfit Pannl", href: "/dashboard/shift-pannel", icon: BarChart3 },
+    { label: "Settingsel", href: "/dashboard/settings", icon: Settings },
   ];
 
   return (
     <TooltipProvider>
-      {/* Mobile Overlay */}
       {openMobile && (
         <div
           onClick={() => setOpenMobile(false)}
@@ -56,7 +56,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
       <motion.aside
         initial={{ width: 80 }}
-        animate={{ width: openMobile ? "80vw" : (collapsed ? 80 : 240) }}
+        animate={{ width: openMobile ? "80vw" : collapsed ? 80 : 240 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
           "fixed z-40 flex flex-col h-full bg-white border-r shadow-sm text-black",
@@ -94,7 +94,9 @@ export default function Sidebar({ collapsed, setCollapsed }) {
                       size={20}
                       className={cn("shrink-0", collapsed ? "mr-2" : "mr-0")}
                     />
-                    {(isMobile || !collapsed) && <span className="inline">{item.label}</span>}
+                    {(isMobile || !collapsed) && (
+                      <span className="inline">{item.label}</span>
+                    )}
                   </Link>
                 </TooltipTrigger>
                 {collapsed && (
@@ -103,6 +105,8 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               </Tooltip>
             );
           })}
+
+          
         </nav>
 
         <Separator />
