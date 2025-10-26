@@ -139,7 +139,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-const LIMIT = 10; // 10 items per page (confirmed)
+const LIMIT = 10;
 
 export default function AdminCreateShift() {
   const [form, setForm] = useState({
@@ -160,7 +160,6 @@ export default function AdminCreateShift() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // fetch managers + initial shifts
   useEffect(() => {
     fetchManagers();
     fetchShifts(1);
@@ -199,17 +198,15 @@ export default function AdminCreateShift() {
     }
   }
 
-  // form change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // day toggles for array days (optional)
   const toggleDay = (d) => {
     setForm((s) => {
-      const cur = Array.isArray(s.days) ? s.days : (s.days ? [s.days] : []);
-      if (cur.includes(d)) return { ...s, days: cur.filter(x => x !== d) };
+      const cur = Array.isArray(s.days) ? s.days : s.days ? [s.days] : [];
+      if (cur.includes(d)) return { ...s, days: cur.filter((x) => x !== d) };
       return { ...s, days: [...cur, d] };
     });
   };
@@ -217,7 +214,6 @@ export default function AdminCreateShift() {
   const resetForm = () =>
     setForm({ name: "", startTime: "", endTime: "", hours: "", days: [], manager: "" });
 
-  // submit create or update
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -229,7 +225,7 @@ export default function AdminCreateShift() {
         startTime: form.startTime,
         endTime: form.endTime,
         hours: Number(form.hours),
-        days: Array.isArray(form.days) ? form.days : (form.days ? [form.days] : []),
+        days: Array.isArray(form.days) ? form.days : form.days ? [form.days] : [],
         manager: form.manager || null,
       };
 
@@ -251,7 +247,6 @@ export default function AdminCreateShift() {
       setMessage(json.message || (json.success ? "Done" : "Error"));
 
       if (json.success) {
-        // After create/update: reload current page (keeps pagination)
         resetForm();
         setEditingId(null);
         fetchShifts(meta.page);
@@ -283,36 +278,37 @@ export default function AdminCreateShift() {
       const res = await fetch(`/api/shifts/${id}`, { method: "DELETE" });
       const json = await res.json();
       setMessage(json.message || (json.success ? "Deleted" : "Error"));
-      if (json.success) {
-        // If last item on page deleted, refetch previous page if empty
-        fetchShifts(meta.page);
-      }
+      if (json.success) fetchShifts(meta.page);
     } catch (err) {
       console.error("delete error", err);
       setMessage("Server error while deleting");
     }
   };
 
-  // pagination click
   const goToPage = (p) => {
     if (p < 1 || p > (meta.totalPages || 1)) return;
     fetchShifts(p);
   };
 
-  // search + sort actions
-  const handleSearch = () => fetchShifts(1, search);
   const handleSortChange = (field) => {
     if (sortBy === field) {
-      setSortOrder((o) => (o === "asc" ? "desc" : "asc"));
-      setSortOrder(prev => prev === "asc" ? "desc" : "asc"); // toggle
-      // fetch with toggled order - note we updated state above, but we'll pass manually:
-      fetchShifts(1, search, field, sortOrder === "asc" ? "desc" : "asc");
+      const newOrder = sortOrder === "asc" ? "desc" : "asc";
+      setSortOrder(newOrder);
+      fetchShifts(1, search, field, newOrder);
     } else {
       setSortBy(field);
       setSortOrder("desc");
       fetchShifts(1, search, field, "desc");
     }
   };
+
+  // 🔍 LIVE SEARCH (debounced)
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      fetchShifts(1, search);
+    }, 500); // 0.5 sec after typing stop
+    return () => clearTimeout(delayDebounce);
+  }, [search]);
 
   const dayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const pageNumbers = Array.from({ length: meta.totalPages || 0 }, (_, i) => i + 1);
@@ -324,48 +320,18 @@ export default function AdminCreateShift() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-900 p-5 rounded shadow space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            required
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Shift name"
-            className="p-2 border rounded dark:bg-gray-800"
-          />
-          <input
-            required
-            name="startTime"
-            type="time"
-            value={form.startTime}
-            onChange={handleChange}
-            className="p-2 border rounded dark:bg-gray-800"
-          />
-          <input
-            required
-            name="endTime"
-            type="time"
-            value={form.endTime}
-            onChange={handleChange}
-            className="p-2 border rounded dark:bg-gray-800"
-          />
+          <input required name="name" value={form.name} onChange={handleChange} placeholder="Shift name" className="p-2 border rounded dark:bg-gray-800" />
+          <input required name="startTime" type="time" value={form.startTime} onChange={handleChange} className="p-2 border rounded dark:bg-gray-800" />
+          <input required name="endTime" type="time" value={form.endTime} onChange={handleChange} className="p-2 border rounded dark:bg-gray-800" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            required
-            name="hours"
-            type="number"
-            min="1"
-            value={form.hours}
-            onChange={handleChange}
-            placeholder="Hours (e.g. 8)"
-            className="p-2 border rounded dark:bg-gray-800"
-          />
+          <input required name="hours" type="number" min="1" value={form.hours} onChange={handleChange} placeholder="Hours (e.g. 8)" className="p-2 border rounded dark:bg-gray-800" />
 
           <div className="p-2 border rounded dark:bg-gray-800">
             <p className="text-sm font-medium mb-2">Select Days</p>
             <div className="flex flex-wrap gap-2">
-              {dayOptions.map(d => {
+              {dayOptions.map((d) => {
                 const selected = Array.isArray(form.days) ? form.days.includes(d) : false;
                 return (
                   <button
@@ -383,7 +349,7 @@ export default function AdminCreateShift() {
 
           <select name="manager" value={form.manager} onChange={handleChange} className="p-2 border rounded dark:bg-gray-800">
             <option value="">Assign Manager (optional)</option>
-            {managers.map(m => (
+            {managers.map((m) => (
               <option key={m._id} value={m._id}>
                 {m.firstName} {m.lastName} ({m.email})
               </option>
@@ -403,11 +369,18 @@ export default function AdminCreateShift() {
         {message && <p className="text-sm text-center text-gray-700 dark:text-gray-300">{message}</p>}
       </form>
 
-      {/* Controls: Search + sort */}
+      {/* 🔍 Search + sort */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex gap-2 items-center">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name / manager / days" className="p-2 border rounded dark:bg-gray-800" />
-          <button onClick={handleSearch} className="px-3 py-2 bg-blue-600 text-white rounded">Search</button>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name / manager / days"
+            className="p-2 border rounded dark:bg-gray-800"
+          />
+          <button onClick={() => fetchShifts(1, search)} className="px-3 py-2 bg-blue-600 text-white rounded">
+            Search
+          </button>
         </div>
 
         <div className="flex gap-2 items-center">
@@ -417,49 +390,62 @@ export default function AdminCreateShift() {
             <option value="name">Name (A → Z)</option>
             <option value="hours">Hours</option>
           </select>
-          <button onClick={() => { setSortOrder((o) => o === "asc" ? "desc" : "asc"); fetchShifts(1, search, sortBy, sortOrder === "asc" ? "desc" : "asc"); }} className="px-2 py-1 border rounded">
+          <button
+            onClick={() => {
+              const newOrder = sortOrder === "asc" ? "desc" : "asc";
+              setSortOrder(newOrder);
+              fetchShifts(1, search, sortBy, newOrder);
+            }}
+            className="px-2 py-1 border rounded"
+          >
             {sortOrder === "asc" ? "Asc" : "Desc"}
           </button>
         </div>
       </div>
 
-      {/* Shifts list */}
+      {/* Shift List */}
       <div className="space-y-3">
         {shifts.length === 0 ? (
           <p className="text-center text-gray-500">No shifts found.</p>
         ) : (
-          shifts.map(shift => (
+          shifts.map((shift) => (
             <div key={shift._id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded">
               <div>
                 <h4 className="font-semibold">{shift.name}</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {shift.startTime} - {shift.endTime} • {shift.hours} hrs • {shift.days && shift.days.length ? shift.days.join(", ") : "No days"}
+                  {shift.startTime} - {shift.endTime} • {shift.hours} hrs •{" "}
+                  {shift.days && shift.days.length ? shift.days.join(", ") : "No days"}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Manager: {shift.manager ? `${shift.manager.firstName} ${shift.manager.lastName} (${shift.manager.email})` : "N/A"}
+                  Manager:{" "}
+                  {shift.manager ? `${shift.manager.firstName} ${shift.manager.lastName} (${shift.manager.email})` : "N/A"}
                 </p>
               </div>
-
               <div className="flex gap-2">
-                <button onClick={() => startEdit(shift)} className="px-3 py-1 bg-yellow-400 rounded">Edit</button>
-                <button onClick={() => handleDelete(shift._id)} className="px-3 py-1 bg-red-500 text-white rounded">Delete</button>
+                <button onClick={() => startEdit(shift)} className="px-3 py-1 bg-yellow-400 rounded">
+                  Edit
+                </button>
+                <button onClick={() => handleDelete(shift._id)} className="px-3 py-1 bg-red-500 text-white rounded">
+                  Delete
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Pagination (numbered) */}
+      {/* Pagination */}
       <div className="flex justify-center mt-4 gap-2 flex-wrap">
-        {pageNumbers.length > 0 && pageNumbers.map((p) => (
-          <button
-            key={p}
-            onClick={() => goToPage(p)}
-            className={`px-3 py-1 rounded ${p === meta.page ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
-          >
-            {p}
-          </button>
-        ))}
+        {pageNumbers.length > 0 &&
+          pageNumbers.map((p) => (
+            <button
+              key={p}
+              onClick={() => goToPage(p)}
+              className={`px-3 py-1 rounded ${p === meta.page ? "bg-blue-600 text-white" : "bg-gray-200 dark:bg-gray-700"}`}
+            >
+              {p}
+            </button>
+          ))}
       </div>
     </div>
   );
