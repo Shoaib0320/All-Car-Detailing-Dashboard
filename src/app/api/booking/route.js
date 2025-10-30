@@ -135,8 +135,6 @@ import { NextResponse } from "next/server";
 import Booking, { BookingStatus } from "@/models/Booking";
 import connectDB from "@/lib/mongodb";
 import { sendEmail } from "@/lib/mailer";
-import { BookingConfirmationTemplate } from "@/emails/BookingConfirmationTemplate";
-
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -216,52 +214,33 @@ export async function POST(req) {
     });
 
     // ✅ Email sending logic
-    const { firstName, lastName, email, date, timeSlot, phone } = data.formData;
+    // const { firstName, lastName, email, date, timeSlot, phone } = data.formData;
+    const { email } = data.formData;
 
     // 📨 User email
-    const userHtml = `
-      <h2>Booking Confirmation - Car Detailing</h2>
-      <p>Hi ${firstName} ${lastName},</p>
-      <p>Your booking has been received successfully.</p>
-      <p><b>Booking ID:</b> ${data.bookingId}</p>
-      <p><b>Date:</b> ${date}</p>
-      <p><b>Time Slot:</b> ${timeSlot || "N/A"}</p>
-      <p><b>Total Price:</b> $${data.totalPrice}</p>
-      <p>Thank you for choosing <b>Car Detailing</b>! 🚗✨</p>
-    `;
+    // const userHtml = render(<BookingConfirmation bookingData={newBooking} />);
 
     // 📨 Owner email
-    const ownerHtml = `
-      <h2>New Booking Received</h2>
-      <p><b>Booking ID:</b> ${data.bookingId}</p>
-      <p><b>Name:</b> ${firstName} ${lastName}</p>
-      <p><b>Email:</b> ${email}</p>
-      <p><b>Phone:</b> ${phone}</p>
-      <p><b>Date:</b> ${date}</p>
-      <p><b>Time Slot:</b> ${timeSlot || "N/A"}</p>
-      <p><b>Total:</b> $${data.totalPrice}</p>
-      <p>Check your dashboard for full booking details.</p>
-    `;
+    // const ownerHtml = render(<OwnerNotification bookingData={newBooking} />);
 
     try {
       // Send to user
       await sendEmail({
         to: email,
-        subject: "Your Booking Confirmation - Car Detailing",
+        subject: `Your Booking Confirmation - ${newBooking.webName} (#${newBooking.bookingId})`,
         html: userHtml,
       });
 
       // Send to owner
       await sendEmail({
         to: process.env.OWNER_EMAIL,
-        subject: `New Booking Received (#${data.bookingId})`,
+        subject: `New Booking Received (#${newBooking.bookingId})`,
         html: ownerHtml,
       });
 
       console.log("✅ Emails sent to user and owner");
     } catch (mailError) {
       console.error("❌ Email sending failed:", mailError);
-      // Don't block booking even if email fails
     }
 
     return NextResponse.json(
