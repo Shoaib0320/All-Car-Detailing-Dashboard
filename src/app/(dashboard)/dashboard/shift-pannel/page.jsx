@@ -1,142 +1,6 @@
-// "use client";
-// import { useEffect, useState } from "react";
-
-// export default function SelectShift() {
-//   const [shifts, setShifts] = useState([]);
-//   const [selectedShift, setSelectedShift] = useState("");
-//   const [loading, setLoading] = useState(false);
-//   const [message, setMessage] = useState("");
-
-//   // 🔹 Fetch shifts
-//   useEffect(() => {
-//     async function fetchShifts() {
-//       try {
-//         const res = await fetch("/api/shifts");
-//         const data = await res.json();
-//         if (data.success) setShifts(data.data);
-//       } catch (err) {
-//         console.error("Error fetching shifts:", err);
-//       }
-//     }
-//     fetchShifts();
-//   }, []);
-
-//   // 🔹 Handle form submit
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     if (!selectedShift) {
-//       setMessage("Please select a shift first.");
-//       return;
-//     }
-
-//     setLoading(true);
-//     setMessage("");
-
-//     try {
-//       const res = await fetch("/api/checkin", {
-//         method: "POST",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ shiftId: selectedShift }),
-//       });
-
-//       const data = await res.json();
-//       setMessage(data.message || "Something went wrong.");
-//     } catch (err) {
-//       setMessage("Server error. Try again.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   console.log("Selected shift:", selectedShift);
-
-//   return (
-//     <div className="p-6 max-w-md mx-auto bg-white shadow-lg rounded-2xl border border-gray-100">
-//       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-//         🕓 Select Your Shift
-//       </h2>
-
-//       <form onSubmit={handleSubmit} className="space-y-4">
-//         {/* Dropdown */}
-//         <div>
-//           <label className="block font-medium text-gray-700 mb-1">
-//             Select Shift
-//           </label>
-//           <select
-//             value={selectedShift}
-//             onChange={(e) => setSelectedShift(e.target.value)}
-//             className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500"
-//           >
-//             <option value="">-- Choose a shift --</option>
-//             {shifts.map((shift) => (
-//               <option key={shift._id} value={shift._id}>
-//                 {shift.name} ({shift.startTime} - {shift.endTime})
-//               </option>
-//             ))}
-//           </select>
-//         </div>
-
-//         {/* Shift details */}
-//         {selectedShift && (
-//           <div className="bg-gray-50 border rounded-lg p-4 mt-2 space-y-2">
-//             {shifts
-//               .filter((s) => s._id === selectedShift)
-//               .map((shift) => (
-//                 <div key={shift._id}>
-//                   <p className="text-sm text-gray-600">
-//                     <span className="font-semibold">Shift Name:</span>{" "}
-//                     {shift.name}
-//                   </p>
-//                   <p className="text-sm text-gray-600">
-//                     <span className="font-semibold">Timing:</span>{" "}
-//                     {shift.startTime} - {shift.endTime}
-//                   </p>
-//                   <p className="text-sm text-gray-600">
-//                     <span className="font-semibold">Days:</span>{" "}
-//                     {shift.days || "Mon–Fri"}
-//                   </p>
-//                   <p className="text-sm text-gray-600">
-//                     <span className="font-semibold">Manager:</span>{" "}
-//                     {shift.manager
-//                       ? `${shift.manager.firstName} ${shift.manager.lastName}`
-//                       : "N/A"}
-//                   </p>
-//                   <p className="text-sm text-gray-600">
-//                     <span className="font-semibold">Email:</span>{" "}
-//                     {shift.manager?.email || "Not available"}
-//                   </p>
-//                 </div>
-//               ))}
-//           </div>
-//         )}
-
-//         {/* Submit Button */}
-//         <button
-//           type="submit"
-//           disabled={loading}
-//           className={`w-full py-2.5 px-4 rounded-lg text-white font-semibold transition ${
-//             loading
-//               ? "bg-gray-400 cursor-not-allowed"
-//               : "bg-blue-600 hover:bg-blue-700"
-//           }`}
-//         >
-//           {loading ? "Submitting..." : "Check In"}
-//         </button>
-//       </form>
-
-//       {/* Message */}
-//       {message && (
-//         <p className="mt-4 text-center text-sm text-gray-700 font-medium">
-//           {message}
-//         </p>
-//       )}
-//     </div>
-//   );
-// }
-
 // components/AdminCreateShift.jsx
 "use client";
+import { userService } from "@/services/userService";
 import React, { useEffect, useState } from "react";
 
 const LIMIT = 10;
@@ -167,13 +31,17 @@ export default function AdminCreateShift() {
 
   async function fetchManagers() {
     try {
-      const res = await fetch("/api/users?role=manager");
-      const data = await res.json();
-      if (data.success) setManagers(data.data);
+      const res = await userService.getAll({ role: "manager", limit: 100 });
+      // const data = await res.json();
+      console.log('users Data',res);
+      
+      if (res.success) setManagers(res.data.users);
     } catch (err) {
       console.error("Error fetching managers", err);
     }
   }
+
+  console.log('Managers', managers);
 
   async function fetchShifts(page = 1, q = search, sBy = sortBy, sOrder = sortOrder) {
     try {

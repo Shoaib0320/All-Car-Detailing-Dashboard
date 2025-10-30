@@ -9,6 +9,7 @@ import {
   Menu,
   Phone,
   CalendarDays,
+  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
@@ -38,11 +39,12 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: Home },
     { label: "Users", href: "/dashboard/users", icon: Users },
-    { label: "Contacts", href: "/dashboard/contacts", icon: Phone },
+    { label: "Contacts MSG", href: "/dashboard/contacts", icon: Phone },
     { label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays },
+    { label: "Agents", href: "/dashboard/agents", icon: User },
     { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-    { label: "Shfit Pannl", href: "/dashboard/shift-pannel", icon: BarChart3 },
-    { label: "Settingsel", href: "/dashboard/settings", icon: Settings },
+    { label: "Shfit Panel", href: "/dashboard/shift-pannel", icon: BarChart3 },
+    { label: "Setting", href: "/dashboard/settings", icon: Settings },
   ];
 
   return (
@@ -106,7 +108,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             );
           })}
 
-          
+
         </nav>
 
         <Separator />

@@ -26,7 +26,7 @@
 // app/api/shifts/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Shift from "@/models/Shift";
+import Shift from "@/Models/Shift";
 
 export async function GET(request) {
   try {
