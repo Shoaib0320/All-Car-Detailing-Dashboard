@@ -4,10 +4,47 @@ import { agentService } from '@/services/agentService';
 import { shiftService } from '@/services/shiftService';
 import { toast } from 'sonner';
 
+// Shadcn UI Components
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 export default function AgentsPage() {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [pagination, setPagination] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -18,6 +55,15 @@ export default function AgentsPage() {
     shift: '',
     email: '',
     password: ''
+  });
+
+  const [editFormData, setEditFormData] = useState({
+    _id: '',
+    agentName: '',
+    agentId: '',
+    shift: '',
+    email: '',
+    isActive: true
   });
 
   // Available shifts (backend se fetch hongi)
@@ -76,6 +122,30 @@ export default function AgentsPage() {
     });
   };
 
+  // Handle edit form input change
+  const handleEditInputChange = (e) => {
+    setEditFormData({
+      ...editFormData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  // Handle select change
+  const handleSelectChange = (name, value) => {
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  // Handle edit select change
+  const handleEditSelectChange = (name, value) => {
+    setEditFormData({
+      ...editFormData,
+      [name]: value
+    });
+  };
+
   // Generate random password
   const generatePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
@@ -111,10 +181,61 @@ export default function AgentsPage() {
       fetchAgents(); // Refresh list
     } catch (error) {
       console.error('Error creating agent:', error);
-      toast.success(error.response?.data?.error || 'Error creating agent');
+      toast.error(error.response?.data?.error || 'Error creating agent');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Edit agent
+  const handleEditAgent = async (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!editFormData.shift) {
+      toast.warning('Please select a shift');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await agentService.updateAgent(editFormData._id, {
+        agentName: editFormData.agentName,
+        agentId: editFormData.agentId,
+        shift: editFormData.shift,
+        email: editFormData.email,
+        isActive: editFormData.isActive
+      });
+      toast.success('Agent updated successfully!');
+      setShowEditForm(false);
+      setEditFormData({
+        _id: '',
+        agentName: '',
+        agentId: '',
+        shift: '',
+        email: '',
+        isActive: true
+      });
+      fetchAgents(); // Refresh list
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      toast.error(error.response?.data?.error || 'Error updating agent');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open edit modal
+  const handleOpenEdit = (agent) => {
+    setEditFormData({
+      _id: agent._id,
+      agentName: agent.agentName,
+      agentId: agent.agentId,
+      shift: agent.shift?._id || '',
+      email: agent.email,
+      isActive: agent.isActive
+    });
+    setShowEditForm(true);
   };
 
   // Delete agent
@@ -131,250 +252,444 @@ export default function AgentsPage() {
     }
   };
 
+  // Toggle agent status
+  const handleToggleStatus = async (agentId, currentStatus) => {
+    try {
+      await agentService.updateAgentStatus(agentId, !currentStatus);
+      toast.success(`Agent ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      fetchAgents(); // Refresh list
+    } catch (error) {
+      console.error('Error updating agent status:', error);
+      toast.error('Error updating status');
+    }
+  };
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Agent Management</h1>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Create New Agent
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search agents by name, ID, or email..."
-          value={searchTerm}
-          onChange={handleSearch}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      {/* Create Agent Modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Create New Agent</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Agent Management</h1>
+          <p className="text-gray-600 mt-1">Manage all agents and their shifts</p>
+        </div>
+        <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              Create New Agent
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Agent</DialogTitle>
+              <DialogDescription>
+                Add a new agent to the system. A welcome email will be sent with login credentials.
+              </DialogDescription>
+            </DialogHeader>
             
-            <form onSubmit={handleCreateAgent}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Agent Name</label>
-                  <input
-                    type="text"
-                    name="agentName"
-                    value={formData.agentName}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+            <form onSubmit={handleCreateAgent} className="space-y-4">
+              {/* Agent Name */}
+              <div className="space-y-2">
+                <Label htmlFor="agentName">Agent Name</Label>
+                <Input
+                  id="agentName"
+                  name="agentName"
+                  value={formData.agentName}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter agent full name"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Agent ID</label>
-                  <input
-                    type="text"
-                    name="agentId"
-                    value={formData.agentId}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+              {/* Agent ID */}
+              <div className="space-y-2">
+                <Label htmlFor="agentId">Agent ID</Label>
+                <Input
+                  id="agentId"
+                  name="agentId"
+                  value={formData.agentId}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter unique agent ID"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Shift</label>
-                  <select
-                    name="shift"
-                    value={formData.shift}
-                    onChange={handleInputChange}
-                    required
-                    disabled={shiftsLoading}
-                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    <option value="">Select Shift</option>
+              {/* Shift Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="shift">Shift</Label>
+                <Select 
+                  value={formData.shift} 
+                  onValueChange={(value) => handleSelectChange('shift', value)}
+                  disabled={shiftsLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a shift" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {shiftsLoading ? (
-                      <option>Loading shifts...</option>
+                      <SelectItem value="loading" disabled>Loading shifts...</SelectItem>
+                    ) : shifts.length === 0 ? (
+                      <SelectItem value="none" disabled>No shifts available</SelectItem>
                     ) : (
                       shifts.map(shift => (
-                        <option key={shift._id} value={shift._id}>
+                        <SelectItem key={shift._id} value={shift._id}>
                           {shift.shiftName} ({shift.startTime} - {shift.endTime})
-                        </option>
+                        </SelectItem>
                       ))
                     )}
-                  </select>
-                  {shifts.length === 0 && !shiftsLoading && (
-                    <p className="text-red-500 text-sm mt-1">
-                      No shifts available. Please create shifts first.
-                    </p>
-                  )}
-                </div>
+                  </SelectContent>
+                </Select>
+                {shifts.length === 0 && !shiftsLoading && (
+                  <p className="text-red-500 text-sm">
+                    No shifts available. Please create shifts first.
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter agent email address"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="password"
+                    name="password"
+                    type="text"
+                    value={formData.password}
                     onChange={handleInputChange}
                     required
-                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Generate or enter password"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Password</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={generatePassword}
-                      className="bg-gray-500 text-white px-3 rounded hover:bg-gray-600"
-                    >
-                      Generate
-                    </button>
-                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={generatePassword}
+                  >
+                    Generate
+                  </Button>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
-                <button
+              <div className="flex gap-3 pt-4">
+                <Button
                   type="submit"
                   disabled={loading || shifts.length === 0}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   {loading ? 'Creating...' : 'Create Agent'}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setShowCreateForm(false)}
-                  className="flex-1 bg-gray-500 text-white py-2 rounded hover:bg-gray-600"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Edit Agent Dialog */}
+      <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Agent</DialogTitle>
+            <DialogDescription>
+              Update agent information and settings.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleEditAgent} className="space-y-4">
+            {/* Agent Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-agentName">Agent Name</Label>
+              <Input
+                id="edit-agentName"
+                name="agentName"
+                value={editFormData.agentName}
+                onChange={handleEditInputChange}
+                required
+                placeholder="Enter agent full name"
+              />
+            </div>
+
+            {/* Agent ID */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-agentId">Agent ID</Label>
+              <Input
+                id="edit-agentId"
+                name="agentId"
+                value={editFormData.agentId}
+                onChange={handleEditInputChange}
+                required
+                placeholder="Enter unique agent ID"
+              />
+            </div>
+
+            {/* Shift Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-shift">Shift</Label>
+              <Select 
+                value={editFormData.shift} 
+                onValueChange={(value) => handleEditSelectChange('shift', value)}
+                disabled={shiftsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a shift" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shiftsLoading ? (
+                    <SelectItem value="loading" disabled>Loading shifts...</SelectItem>
+                  ) : shifts.length === 0 ? (
+                    <SelectItem value="none" disabled>No shifts available</SelectItem>
+                  ) : (
+                    shifts.map(shift => (
+                      <SelectItem key={shift._id} value={shift._id}>
+                        {shift.shiftName} ({shift.startTime} - {shift.endTime})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                name="email"
+                type="email"
+                value={editFormData.email}
+                onChange={handleEditInputChange}
+                required
+                placeholder="Enter agent email address"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select 
+                value={editFormData.isActive.toString()} 
+                onValueChange={(value) => handleEditSelectChange('isActive', value === 'true')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                {loading ? 'Updating...' : 'Update Agent'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEditForm(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search agents by name, ID, or email..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="w-full pl-10"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
-        </div>
-      )}
+        </CardContent>
+      </Card>
 
       {/* Agents List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">Loading agents...</div>
-        ) : agents.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No agents found
-          </div>
-        ) : (
-          <>
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Agent
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Shift
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {agents.map((agent) => (
-                  <tr key={agent._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {agent.agentName}
+      <Card>
+        <CardHeader>
+          <CardTitle>Agents</CardTitle>
+          <CardDescription>
+            View and manage all registered agents in the system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-600 mt-2">Loading agents...</p>
+            </div>
+          ) : agents.length === 0 ? (
+            <div className="text-center py-8">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No agents</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Get started by creating a new agent.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Agent Details</TableHead>
+                    <TableHead>Shift</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agents.map((agent) => (
+                    <TableRow key={agent._id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium text-gray-900">
+                            {agent.agentName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            ID: {agent.agentId}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {agent.email}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            Created: {new Date(agent.createdAt).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {agent.agentId}
+                      </TableCell>
+                      <TableCell>
+                        {agent.shift ? (
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            {agent.shift.shiftName}
+                            <span className="ml-1 text-xs">
+                              ({agent.shift.startTime} - {agent.shift.endTime})
+                            </span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+                            No Shift
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={agent.isActive ? "default" : "secondary"}
+                          className={agent.isActive 
+                            ? "bg-green-100 text-green-800 hover:bg-green-100" 
+                            : "bg-red-100 text-red-800 hover:bg-red-100"
+                          }
+                        >
+                          {agent.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenEdit(agent)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleStatus(agent._id, agent.isActive)}
+                            className={
+                              agent.isActive 
+                                ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50' 
+                                : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                            }
+                          >
+                            {agent.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteAgent(agent._id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Delete
+                          </Button>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {agent.email}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {agent.shift ? (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                          {agent.shift.shiftName} ({agent.shift.startTime} - {agent.shift.endTime})
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">
-                          No Shift
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        agent.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {agent.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => handleDeleteAgent(agent._id)}
-                        className="text-red-600 hover:text-red-900 mr-3"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
-                <div>
-                  Showing {(pagination.currentPage - 1) * 10 + 1} to{' '}
-                  {Math.min(pagination.currentPage * 10, pagination.totalAgents)} of{' '}
-                  {pagination.totalAgents} agents
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => fetchAgents(pagination.currentPage - 1, searchTerm)}
-                    disabled={!pagination.hasPrev}
-                    className="px-3 py-1 border rounded disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => fetchAgents(pagination.currentPage + 1, searchTerm)}
-                    disabled={!pagination.hasNext}
-                    className="px-3 py-1 border rounded disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between space-x-2 py-4">
+              <div className="text-sm text-gray-700">
+                Showing <span className="font-medium">{(pagination.currentPage - 1) * 10 + 1}</span> to{' '}
+                <span className="font-medium">
+                  {Math.min(pagination.currentPage * 10, pagination.totalAgents)}
+                </span> of{' '}
+                <span className="font-medium">{pagination.totalAgents}</span> agents
               </div>
-            )}
-          </>
-        )}
-      </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchAgents(pagination.currentPage - 1, searchTerm)}
+                  disabled={!pagination.hasPrev}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchAgents(pagination.currentPage + 1, searchTerm)}
+                  disabled={!pagination.hasNext}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
