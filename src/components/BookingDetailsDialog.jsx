@@ -19,10 +19,12 @@
 //   DialogFooter,
 //   DialogTitle,
 // } from "@/components/ui/dialog";
+// import { Calendar } from "@/components/ui/calendar";
 // import { Separator } from "@/components/ui/separator";
 // import { Button } from "@/components/ui/button";
 // import { X, Loader2 } from "lucide-react";
-// import { toast } from "sonner"; // ✅ new toast import from sonner
+// import { toast } from "sonner";
+// import { RescheduleBooking } from "@/components/RescheduleBooking";
 
 // export default function BookingDetailsDialog({
 //   booking,
@@ -31,6 +33,7 @@
 //   onStatusChange,
 // }) {
 //   const [loading, setLoading] = useState(false);
+//   const [showReschedule, setShowReschedule] = useState(false);
 
 //   if (!booking) return null;
 
@@ -50,13 +53,10 @@
 //     createdAt,
 //   } = booking;
 
-//   // 🔹 Update booking status (using sonner toast)
+//   // 🔹 Booking status update function
 //   const updateBookingStatus = async (newStatus) => {
-//     if (!confirm(`Are you sure you want to ${newStatus} this booking?`)) return;
-
 //     try {
 //       setLoading(true);
-
 //       const response = await fetch(`/api/booking/${_id}`, {
 //         method: "PUT",
 //         headers: { "Content-Type": "application/json" },
@@ -66,14 +66,14 @@
 //       if (!response.ok) throw new Error(`Failed to ${newStatus} booking`);
 //       const data = await response.json();
 
-//       // ✅ Update parent instantly
 //       if (onStatusChange) onStatusChange({ ...booking, status: newStatus });
 
-//       // ✅ Toast instead of alert
 //       toast.success(
 //         newStatus === "confirmed"
 //           ? `Booking ID ${bookingId} confirmed ✅`
-//           : `Booking ID ${bookingId} cancelled ❌`
+//           : newStatus === "completed"
+//             ? `Booking ID ${bookingId} marked as completed ✅`
+//             : `Booking ID ${bookingId} cancelled ❌`
 //       );
 
 //       onClose();
@@ -226,12 +226,6 @@
 //                   <p>
 //                     <span className="font-medium">Color:</span> {v.vehicleColor}
 //                   </p>
-//                   {v.vehicleLength && (
-//                     <p>
-//                       <span className="font-medium">Length:</span>{" "}
-//                       {v.vehicleLength}
-//                     </p>
-//                   )}
 //                 </div>
 //               </div>
 //             ))}
@@ -264,47 +258,9 @@
 //           </section>
 //         </div>
 
-//         {/* Footer */}
-//         {/* <DialogFooter className="sticky bottom-0 bg-white border-t px-6 py-3 flex justify-between">
-//           <div className="flex gap-3">
-//             <Button
-//               variant="destructive"
-//               onClick={() => updateBookingStatus("cancelled")}
-//               disabled={loading || status === "cancelled"}
-//               className="bg-red-600 hover:bg-red-700"
-//             >
-//               {loading && status !== "cancelled" ? (
-//                 <>
-//                   <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing...
-//                 </>
-//               ) : (
-//                 "Cancel Booking"
-//               )}
-//             </Button>
-
-//             <Button
-//               variant="default"
-//               onClick={() => updateBookingStatus("confirmed")}
-//               disabled={loading || status === "confirmed"}
-//               className="bg-green-600 hover:bg-green-700"
-//             >
-//               {loading && status !== "confirmed" ? (
-//                 <>
-//                   <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing...
-//                 </>
-//               ) : (
-//                 "Confirm Booking"
-//               )}
-//             </Button>
-//           </div>
-
-//           <Button variant="outline" onClick={onClose}>
-//             Close
-//           </Button>
-//         </DialogFooter> */}
-//         {/* Footer */}
-//         <DialogFooter className="sticky bottom-0 bg-white border-t px-6 py-3 flex justify-between">
-//           {/* Cancel Booking Button */}
+//         {/* 🔹 Footer Buttons (4 buttons) */}
+//         <DialogFooter className="sticky bottom-0 bg-white border-t px-6 py-3 flex flex-wrap gap-3 justify-between">
+//           {/* ❌ Cancel Booking */}
 //           <AlertDialog>
 //             <AlertDialogTrigger asChild>
 //               <Button
@@ -312,7 +268,7 @@
 //                 disabled={loading || status === "cancelled"}
 //                 className="bg-red-600 hover:bg-red-700"
 //               >
-//                 Cancel Booking
+//                 Cancel
 //               </Button>
 //             </AlertDialogTrigger>
 //             <AlertDialogContent>
@@ -335,7 +291,7 @@
 //             </AlertDialogContent>
 //           </AlertDialog>
 
-//           {/* Confirm Booking Button */}
+//           {/* ✅ Confirm Booking */}
 //           <AlertDialog>
 //             <AlertDialogTrigger asChild>
 //               <Button
@@ -343,7 +299,7 @@
 //                 disabled={loading || status === "confirmed"}
 //                 className="bg-green-600 hover:bg-green-700"
 //               >
-//                 Confirm Booking
+//                 Confirm 
 //               </Button>
 //             </AlertDialogTrigger>
 //             <AlertDialogContent>
@@ -365,15 +321,58 @@
 //             </AlertDialogContent>
 //           </AlertDialog>
 
-//           {/* Close button */}
-//           <Button variant="outline" onClick={onClose}>
-//             Close
+//           {/* 🟦 Complete Booking */}
+//           <Button
+//             variant="default"
+//             disabled={loading || status === "completed"}
+//             onClick={() => updateBookingStatus("completed")}
+//             className="bg-blue-600 hover:bg-blue-700"
+//           >
+//             {loading && status !== "completed" ? (
+//               <>
+//                 <Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing...
+//               </>
+//             ) : (
+//               "Complete"
+//             )}
+//           </Button>
+
+//           {/* 🟨 Reschedule Booking */}
+//           <Button
+//             variant="secondary"
+//             onClick={() => setShowReschedule(true)}
+//             className="bg-yellow-500 hover:bg-yellow-600 text-white"
+//           >
+//             Reschedule 
 //           </Button>
 //         </DialogFooter>
 //       </DialogContent>
+//       {showReschedule && (
+//         <RescheduleBooking
+//           booking={booking}
+//           isOpen={showReschedule}
+//           onClose={() => setShowReschedule(false)} 
+//           onSuccess={(updatedBooking) => {
+//             if (onStatusChange) onStatusChange(updatedBooking);
+//             setShowReschedule(false);
+//           }}
+//         />
+//       )}
 //     </Dialog>
 //   );
 // }
+
+
+
+
+
+
+
+
+
+
+
+
 
 "use client";
 
@@ -449,8 +448,8 @@ export default function BookingDetailsDialog({
         newStatus === "confirmed"
           ? `Booking ID ${bookingId} confirmed ✅`
           : newStatus === "completed"
-            ? `Booking ID ${bookingId} marked as completed ✅`
-            : `Booking ID ${bookingId} cancelled ❌`
+          ? `Booking ID ${bookingId} marked as completed ✅`
+          : `Booking ID ${bookingId} cancelled ❌`
       );
 
       onClose();
@@ -642,7 +641,12 @@ export default function BookingDetailsDialog({
             <AlertDialogTrigger asChild>
               <Button
                 variant="destructive"
-                disabled={loading || status === "cancelled"}
+                // ✅ UPDATED
+                disabled={
+                  loading ||
+                  status === "cancelled" ||
+                  status === "completed"
+                }
                 className="bg-red-600 hover:bg-red-700"
               >
                 Cancel
@@ -673,10 +677,13 @@ export default function BookingDetailsDialog({
             <AlertDialogTrigger asChild>
               <Button
                 variant="default"
-                disabled={loading || status === "confirmed"}
+                // ✅ UPDATED
+                disabled={
+                  loading || status === "confirmed" || status === "completed" || status === "rescheduled"
+                }
                 className="bg-green-600 hover:bg-green-700"
               >
-                Confirm 
+                Confirm
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -701,7 +708,10 @@ export default function BookingDetailsDialog({
           {/* 🟦 Complete Booking */}
           <Button
             variant="default"
-            disabled={loading || status === "completed"}
+            // ✅ UPDATED: Added logic for 'cancelled'
+            disabled={
+              loading || status === "completed" || status === "cancelled"
+            }
             onClick={() => updateBookingStatus("completed")}
             className="bg-blue-600 hover:bg-blue-700"
           >
@@ -718,9 +728,13 @@ export default function BookingDetailsDialog({
           <Button
             variant="secondary"
             onClick={() => setShowReschedule(true)}
+            // ✅ UPDATED
+            disabled={
+              loading || status === "completed" || status === "cancelled"
+            }
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
           >
-            Reschedule 
+            Reschedule
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -728,7 +742,7 @@ export default function BookingDetailsDialog({
         <RescheduleBooking
           booking={booking}
           isOpen={showReschedule}
-          onClose={() => setShowReschedule(false)} 
+          onClose={() => setShowReschedule(false)}
           onSuccess={(updatedBooking) => {
             if (onStatusChange) onStatusChange(updatedBooking);
             setShowReschedule(false);
@@ -738,3 +752,5 @@ export default function BookingDetailsDialog({
     </Dialog>
   );
 }
+
+
