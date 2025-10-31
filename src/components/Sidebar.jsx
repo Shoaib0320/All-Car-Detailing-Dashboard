@@ -9,6 +9,7 @@ import {
   Menu,
   Phone,
   CalendarDays,
+  AlignHorizontalJustifyEndIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import AttendancePage from "@/app/(dashboard)/dashboard/attendance/page";
 
 
 export default function Sidebar({ collapsed, setCollapsed }) {
@@ -42,7 +44,9 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     { label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays },
     { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
     { label: "Shfit Pannl", href: "/dashboard/shift-pannel", icon: BarChart3 },
-    { label: "Settingsel", href: "/dashboard/settings", icon: Settings },
+    { label: "Attendance", href: "/dashboard/attendance", icon: AlignHorizontalJustifyEndIcon },
+    { label: "View-Attendance", href: "/dashboard/view-attendance", icon: AlignHorizontalJustifyEndIcon },
+    { label: "Setting", href: "/dashboard/settings", icon: Settings },
   ];
 
   return (

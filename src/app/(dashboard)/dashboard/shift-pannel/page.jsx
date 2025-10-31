@@ -347,14 +347,25 @@ export default function AdminCreateShift() {
             </div>
           </div>
 
-          <select name="manager" value={form.manager} onChange={handleChange} className="p-2 border rounded dark:bg-gray-800">
+          <select
+            name="manager"
+            value={form.manager}
+            onChange={handleChange}
+            className="p-2 border rounded dark:bg-gray-800"
+          >
             <option value="">Assign Manager (optional)</option>
-            {managers.map((m) => (
-              <option key={m._id} value={m._id}>
-                {m.firstName} {m.lastName} ({m.email})
-              </option>
-            ))}
+
+            {Array.isArray(managers) && managers.length > 0 ? (
+              managers.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.firstName} {m.lastName} ({m.email})
+                </option>
+              ))
+            ) : (
+              <option disabled>Loading or no managers found</option>
+            )}
           </select>
+
         </div>
 
         <div className="flex gap-2">
