@@ -87,12 +87,10 @@
 //   }
 // }
 
-
-
 // import { NextResponse } from "next/server";
 // import Booking from "@/models/Booking";
 // import connectDB from "@/lib/mongodb";
-// import { sendEmail } from "@/lib/mailer"; 
+// import { sendEmail } from "@/lib/mailer";
 
 // const corsHeaders = {
 //   "Access-Control-Allow-Origin": "*",
@@ -260,14 +258,10 @@
 //   }
 // }
 
-
-
-
-
 import { NextResponse } from "next/server";
-import Booking from "@/models/Booking";
+import Booking from "@/Models/Booking";
 import connectDB from "@/lib/mongodb";
-import { sendEmail } from "@/lib/mailer"; 
+import { sendEmail } from "@/lib/mailer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -429,7 +423,7 @@ export async function PUT(req, { params }) {
       if (status === "cancelled" && updatedBooking.cancellationReason) {
         userHtmlBody += `<br><p><strong>Reason for cancellation:</strong> ${updatedBooking.cancellationReason}</p>`;
       }
-      
+
       // User ko email bhejein
       sendEmail({
         to: userEmail,
@@ -450,7 +444,6 @@ export async function PUT(req, { params }) {
         html: ownerHtmlBody, // Dynamic body yahan use karein
       });
       // YAHAN TAK EMAIL LOGIC MEIN CHANGE HUA
-
     } catch (mailError) {
       console.error("❌ Failed to send status emails:", mailError);
       // Email fail ho to bhi response zaroor bhejein
