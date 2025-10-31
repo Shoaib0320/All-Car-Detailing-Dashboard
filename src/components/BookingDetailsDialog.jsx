@@ -299,7 +299,7 @@
 //                 disabled={loading || status === "confirmed"}
 //                 className="bg-green-600 hover:bg-green-700"
 //               >
-//                 Confirm 
+//                 Confirm
 //               </Button>
 //             </AlertDialogTrigger>
 //             <AlertDialogContent>
@@ -343,7 +343,7 @@
 //             onClick={() => setShowReschedule(true)}
 //             className="bg-yellow-500 hover:bg-yellow-600 text-white"
 //           >
-//             Reschedule 
+//             Reschedule
 //           </Button>
 //         </DialogFooter>
 //       </DialogContent>
@@ -351,7 +351,7 @@
 //         <RescheduleBooking
 //           booking={booking}
 //           isOpen={showReschedule}
-//           onClose={() => setShowReschedule(false)} 
+//           onClose={() => setShowReschedule(false)}
 //           onSuccess={(updatedBooking) => {
 //             if (onStatusChange) onStatusChange(updatedBooking);
 //             setShowReschedule(false);
@@ -361,18 +361,6 @@
 //     </Dialog>
 //   );
 // }
-
-
-
-
-
-
-
-
-
-
-
-
 
 "use client";
 
@@ -398,6 +386,8 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { RescheduleBooking } from "@/components/RescheduleBooking";
@@ -410,6 +400,7 @@ export default function BookingDetailsDialog({
 }) {
   const [loading, setLoading] = useState(false);
   const [showReschedule, setShowReschedule] = useState(false);
+  const [reason, setReason] = useState("");
 
   if (!booking) return null;
 
@@ -430,28 +421,40 @@ export default function BookingDetailsDialog({
   } = booking;
 
   // 🔹 Booking status update function
-  const updateBookingStatus = async (newStatus) => {
+  const updateBookingStatus = async (newStatus, cancellationReason = null) => {
     try {
       setLoading(true);
+      const bodyPayload = {
+        status: newStatus,
+      };
+      if (newStatus === "cancelled" && cancellationReason) {
+        bodyPayload.cancellationReason = cancellationReason;
+      }
       const response = await fetch(`/api/booking/${_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(bodyPayload),
       });
 
       if (!response.ok) throw new Error(`Failed to ${newStatus} booking`);
       const data = await response.json();
 
-      if (onStatusChange) onStatusChange({ ...booking, status: newStatus });
+      if (onStatusChange) {
+        onStatusChange({
+          ...booking,
+          status: newStatus,
+          cancellationReason: cancellationReason,
+        });
+      }
 
       toast.success(
         newStatus === "confirmed"
           ? `Booking ID ${bookingId} confirmed ✅`
           : newStatus === "completed"
-          ? `Booking ID ${bookingId} marked as completed ✅`
-          : `Booking ID ${bookingId} cancelled ❌`
+            ? `Booking ID ${bookingId} marked as completed ✅`
+            : `Booking ID ${bookingId} cancelled ❌`
       );
-
+      setReason("");
       onClose();
     } catch (err) {
       console.error(err);
@@ -459,10 +462,15 @@ export default function BookingDetailsDialog({
     } finally {
       setLoading(false);
     }
+
+    const handleClose = () => {
+    setReason("");
+    onClose();    
+  };
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl p-0 overflow-hidden">
         {/* Header */}
         <div className="sticky top-0 bg-white z-10 border-b flex items-center justify-between px-6 py-4">
@@ -636,22 +644,21 @@ export default function BookingDetailsDialog({
 
         {/* 🔹 Footer Buttons (4 buttons) */}
         <DialogFooter className="sticky bottom-0 bg-white border-t px-6 py-3 flex flex-wrap gap-3 justify-between">
-          {/* ❌ Cancel Booking */}
+          {/*  Cancel Booking */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 variant="destructive"
                 // ✅ UPDATED
                 disabled={
-                  loading ||
-                  status === "cancelled" ||
-                  status === "completed"
+                  loading || status === "cancelled" || status === "completed"
                 }
                 className="bg-red-600 hover:bg-red-700"
               >
                 Cancel
               </Button>
             </AlertDialogTrigger>
+
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
@@ -660,10 +667,24 @@ export default function BookingDetailsDialog({
                   cancelled.
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="grid w-full gap-1.5 py-2">
+                <Label htmlFor="cancellationReason">
+                  Reason for Cancellation
+                </Label>
+                <Textarea
+                  placeholder="e.g., Customer request, scheduling conflict..."
+                  id="cancellationReason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </div>
               <AlertDialogFooter>
                 <AlertDialogCancel>Go Back</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => updateBookingStatus("cancelled")}
+                  // onClick={() => updateBookingStatus("cancelled")}
+                  // className="bg-red-600 hover:bg-red-700"
+                  onClick={() => updateBookingStatus("cancelled", reason)}
+                  disabled={!reason.trim()} 
                   className="bg-red-600 hover:bg-red-700"
                 >
                   Yes, Cancel
@@ -679,7 +700,10 @@ export default function BookingDetailsDialog({
                 variant="default"
                 // ✅ UPDATED
                 disabled={
-                  loading || status === "confirmed" || status === "completed" || status === "rescheduled"
+                  loading ||
+                  status === "confirmed" ||
+                  status === "completed" ||
+                  status === "rescheduled"
                 }
                 className="bg-green-600 hover:bg-green-700"
               >
@@ -752,5 +776,3 @@ export default function BookingDetailsDialog({
     </Dialog>
   );
 }
-
-

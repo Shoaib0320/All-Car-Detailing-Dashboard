@@ -43,14 +43,8 @@
 //   }
 // }
 
-
-
-
-
-
-
 import { NextResponse } from "next/server";
-import Booking from "@/models/Booking";
+import Booking from "@/Models/Booking";
 import connectDB from "@/lib/mongodb";
 
 const corsHeaders = {

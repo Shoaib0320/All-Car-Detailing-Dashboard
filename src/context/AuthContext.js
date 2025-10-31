@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { useRouter } from 'next/navigation'; 
+
+
 
 const AuthContext = createContext();
 
@@ -9,6 +12,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const router = useRouter();
+
 
   // Check if user is logged in on app start
   useEffect(() => {
@@ -55,20 +61,36 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // const logout = async () => {
+  //   try {
+  //     await authService.logout();
+  //   } catch (error) {
+  //     console.error('Logout error:', error);
+  //   } finally {
+  //     // Clear token from localStorage
+  //     if (typeof window !== 'undefined') {
+  //       localStorage.removeItem('token');
+  //     }
+  //     setUser(null);
+  //     setIsAuthenticated(false);
+  //   }
+  // };
+
   const logout = async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Clear token from localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
-      setUser(null);
-      setIsAuthenticated(false);
+  try {
+    await authService.logout();
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
     }
-  };
+    setUser(null);
+    setIsAuthenticated(false);
+    router.replace('/login');
+  }
+};
+
 
   const updateUser = (userData) => {
     setUser(prev => ({ ...prev, ...userData }));

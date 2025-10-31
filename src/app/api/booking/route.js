@@ -122,17 +122,8 @@
 //   }
 // }
 
-
-
-
-
-
-
-
-
-
 import { NextResponse } from "next/server";
-import Booking, { BookingStatus } from "@/models/Booking";
+import Booking, { BookingStatus } from "@/Models/Booking";
 import connectDB from "@/lib/mongodb";
 import { sendEmail } from "@/lib/mailer";
 
@@ -177,7 +168,9 @@ export async function POST(req) {
     }
 
     // ✅ Check for duplicate bookingId
-    const existingBooking = await Booking.findOne({ bookingId: data.bookingId });
+    const existingBooking = await Booking.findOne({
+      bookingId: data.bookingId,
+    });
     if (existingBooking) {
       return NextResponse.json(
         { success: false, error: "Booking ID already exists" },
