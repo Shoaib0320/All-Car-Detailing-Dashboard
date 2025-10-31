@@ -9,7 +9,6 @@ import {
   Menu,
   Phone,
   CalendarDays,
-  AlignHorizontalJustifyEndIcon,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
@@ -39,13 +38,13 @@ export default function Sidebar({ collapsed, setCollapsed }) {
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: Home },
     { label: "Users", href: "/dashboard/users", icon: Users },
-    { label: "Contacts", href: "/dashboard/contacts", icon: Phone },
+    { label: "Contacts MSG", href: "/dashboard/contacts", icon: Phone },
     { label: "Bookings", href: "/dashboard/bookings", icon: CalendarDays },
+    { label: "Agents", href: "/dashboard/agents", icon: User },
+    { label: "Promo Code", href: "/dashboard/promo-codes", icon: Code2Icon },
     { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
     { label: "Shfit Pannl", href: "/dashboard/shift-pannel", icon: BarChart3 },
-    // { label: "Attendance", href: "/dashboard/attendance", icon: AlignHorizontalJustifyEndIcon },
-    { label: "View-Attendance", href: "/dashboard/view-attendance", icon: AlignHorizontalJustifyEndIcon },
-    { label: "Setting", href: "/dashboard/settings", icon: Settings },
+    { label: "Settingsel", href: "/dashboard/settings", icon: Settings },
   ];
 
   return (
@@ -109,7 +108,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
             );
           })}
 
-          
+
         </nav>
 
         <Separator />

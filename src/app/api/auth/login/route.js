@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import connectDB from '../../../../lib/mongodb';
-import User from '@/models/User';
-import Role from "@/models/Role";
+import { NextResponse } from "next/server";
+import connectDB from "../../../../lib/mongodb";
+import User from "@/Models/User";
+import Role from "@/Models/Role";
 
-import { generateToken, getCookieOptions } from '../../../../lib/jwt';
+import { generateToken, getCookieOptions } from "../../../../lib/jwt";
 
 export async function POST(request) {
   try {
@@ -15,17 +15,17 @@ export async function POST(request) {
     // 1) Check if email and password exist
     if (!email || !password) {
       return NextResponse.json(
-        { success: false, error: 'Please provide email and password' },
+        { success: false, error: "Please provide email and password" },
         { status: 400 }
       );
     }
 
     // 2) Check if user exists && password is correct
-    const user = await User.findOne({ email }).populate('role');
-    
+    const user = await User.findOne({ email }).populate("role");
+
     if (!user || !(await user.correctPassword(password, user.password))) {
       return NextResponse.json(
-        { success: false, error: 'Incorrect email or password' },
+        { success: false, error: "Incorrect email or password" },
         { status: 401 }
       );
     }
@@ -33,7 +33,11 @@ export async function POST(request) {
     // 3) Check if user is active
     if (!user.isActive) {
       return NextResponse.json(
-        { success: false, error: 'Your account has been deactivated. Please contact administrator.' },
+        {
+          success: false,
+          error:
+            "Your account has been deactivated. Please contact administrator.",
+        },
         { status: 401 }
       );
     }
@@ -41,7 +45,11 @@ export async function POST(request) {
     // 4) Check if account is locked
     if (user.isLocked()) {
       return NextResponse.json(
-        { success: false, error: 'Account locked due to too many failed login attempts. Try again later.' },
+        {
+          success: false,
+          error:
+            "Account locked due to too many failed login attempts. Try again later.",
+        },
         { status: 401 }
       );
     }
@@ -56,7 +64,7 @@ export async function POST(request) {
     const token = generateToken({
       userId: user._id,
       email: user.email,
-      role: user.role.name
+      role: user.role.name,
     });
 
     const response = NextResponse.json({
@@ -70,24 +78,24 @@ export async function POST(request) {
           role: user.role.name,
           fullName: user.fullName,
           profileImage: user.profileImage,
-          permissions: user.role.permissions
+          permissions: user.role.permissions,
         },
-        token
+        token,
       },
-      message: 'Login successful'
+      message: "Login successful",
     });
 
     // 7) Set token in cookie
-    response.cookies.set('token', token, getCookieOptions());
+    response.cookies.set("token", token, getCookieOptions());
 
     return response;
   } catch (error) {
-    console.error('Login Error:', error);
+    console.error("Login Error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Login failed',
-        details: error.message 
+      {
+        success: false,
+        error: "Login failed",
+        details: error.message,
       },
       { status: 500 }
     );

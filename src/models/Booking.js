@@ -7,6 +7,7 @@ export const BookingStatus = {
   IN_PROGRESS: "in-progress",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
+  RESCHEDULED: "rescheduled",
 };
 
 // Package Schema
@@ -97,6 +98,10 @@ const BookingSchema = new mongoose.Schema(
       type: String,
       enum: Object.values(BookingStatus),
       default: BookingStatus.PENDING,
+    },
+    cancellationReason: {
+      type: String,
+      default: null, // Ya isko bas 'type: String' bhi rakh saktay hain
     },
   },
   { timestamps: true }

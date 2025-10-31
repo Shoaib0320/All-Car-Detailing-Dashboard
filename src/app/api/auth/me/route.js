@@ -1,26 +1,26 @@
-import { NextResponse } from 'next/server';
-import connectDB from '../../../../lib/mongodb';
-import { verifyToken } from '../../../../lib/jwt';
-import User from '@/models/User';
+import { NextResponse } from "next/server";
+import connectDB from "../../../../lib/mongodb";
+import { verifyToken } from "../../../../lib/jwt";
+import User from "@/Models/User";
 
 export async function GET(request) {
   try {
     await connectDB();
 
     // Get token from cookie or Authorization header
-    let token = request.cookies.get('token')?.value;
+    let token = request.cookies.get("token")?.value;
 
     // Check Authorization header if no cookie token
     if (!token) {
-      const authHeader = request.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
+      const authHeader = request.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
         token = authHeader.substring(7);
       }
     }
 
     if (!token) {
       return NextResponse.json(
-        { success: false, error: 'Not authenticated' },
+        { success: false, error: "Not authenticated" },
         { status: 401 }
       );
     }
@@ -30,26 +30,26 @@ export async function GET(request) {
 
     if (!decoded) {
       return NextResponse.json(
-        { success: false, error: 'Invalid token' },
+        { success: false, error: "Invalid token" },
         { status: 401 }
       );
     }
 
     // Find user with role populated
     const user = await User.findById(decoded.userId)
-      .populate('role')
-      .select('-password');
-    
+      .populate("role")
+      .select("-password");
+
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'User not found' },
+        { success: false, error: "User not found" },
         { status: 404 }
       );
     }
 
     if (!user.isActive) {
       return NextResponse.json(
-        { success: false, error: 'Account is deactivated' },
+        { success: false, error: "Account is deactivated" },
         { status: 401 }
       );
     }
@@ -72,17 +72,17 @@ export async function GET(request) {
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified,
           lastLogin: user.lastLogin,
-          permissions: user.role.permissions
-        }
-      }
+          permissions: user.role.permissions,
+        },
+      },
     });
   } catch (error) {
-    console.error('Get Current User Error:', error);
+    console.error("Get Current User Error:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to get user data',
-        details: error.message 
+      {
+        success: false,
+        error: "Failed to get user data",
+        details: error.message,
       },
       { status: 500 }
     );
