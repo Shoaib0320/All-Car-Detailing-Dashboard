@@ -26,7 +26,7 @@
 // app/api/shifts/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Shift from "@/Models/Shift";
+import Shift from "@/models/Shift";
 
 export async function GET(request) {
   try {
@@ -44,7 +44,7 @@ export async function GET(request) {
       filter.$or = [
         { name: { $regex: q, $options: "i" } },
         { days: { $regex: q, $options: "i" } },
-        { hours: isNaN(Number(q)) ? null : Number(q) }, // optional numeric search
+        // { hours: isNaN(Number(q)) ? null : Number(q) }, // optional numeric search
       ].filter(Boolean);
       // Also search manager name requires lookup; we will fetch all and filter manager name in aggregation below
     }
@@ -56,7 +56,7 @@ export async function GET(request) {
           $or: [
             { name: { $regex: q, $options: "i" } },
             { days: { $regex: q, $options: "i" } },
-            { hours: isNaN(Number(q)) ? -99999 : Number(q) }, // won't match if NaN
+            // { hours: isNaN(Number(q)) ? -99999 : Number(q) }, // won't match if NaN
             { "managerDoc.firstName": { $regex: q, $options: "i" } },
             { "managerDoc.lastName": { $regex: q, $options: "i" } },
           ],
@@ -79,14 +79,14 @@ export async function GET(request) {
           name: 1,
           startTime: 1,
           endTime: 1,
-          hours: 1,
+          // hours: 1,
           days: 1,
-          manager: {
-            _id: "$managerDoc._id",
-            firstName: "$managerDoc.firstName",
-            lastName: "$managerDoc.lastName",
-            email: "$managerDoc.email",
-          },
+          // manager: {
+          //   _id: "$managerDoc._id",
+          //   firstName: "$managerDoc.firstName",
+          //   lastName: "$managerDoc.lastName",
+          //   email: "$managerDoc.email",
+          // },
           createdAt: 1,
           updatedAt: 1,
         },
@@ -121,9 +121,9 @@ export async function POST(request) {
   try {
     await connectDB();
     const body = await request.json();
-    const { name, startTime, endTime, hours, days, manager } = body;
+    const { name, startTime, endTime,  days } = body;
 
-    if (!name || !startTime || !endTime || !hours) {
+    if (!name || !startTime || !endTime || !days) {
       return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 });
     }
 
@@ -131,15 +131,17 @@ export async function POST(request) {
       name,
       startTime,
       endTime,
-      hours,
+      // hours,
       days: Array.isArray(days) ? days : (days ? [days] : []),
-      manager: manager || null,
+      // manager: manager || null,
     });
 
     // populate manager for immediate return
-    const populated = await Shift.findById(shift._id).populate("manager", "firstName lastName email");
+    // const populated = await Shift.findById(shift._id).populate( "firstName lastName email");
 
-    return NextResponse.json({ success: true, message: "Shift created", data: populated }, { status: 201 });
+    return NextResponse.json({ success: true, message: "Shift created", 
+      // data: populated
+     }, { status: 201 });
   } catch (error) {
     console.error("POST /api/shifts error:", error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

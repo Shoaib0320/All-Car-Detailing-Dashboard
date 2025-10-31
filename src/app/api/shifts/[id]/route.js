@@ -1,7 +1,7 @@
 // app/api/shifts/[id]/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Shift from "@/Models/Shift";
+import Shift from "@/models/Shift";
 
 /* 🔹 UPDATE SHIFT */
 export async function PUT(request, context) {
@@ -17,7 +17,7 @@ export async function PUT(request, context) {
 
     const updated = await Shift.findByIdAndUpdate(id, body, {
       new: true,
-    }).populate("manager", "firstName lastName email");
+    });
 
     if (!updated) {
       return NextResponse.json(
