@@ -4,7 +4,7 @@ const checkInSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     shift: { type: mongoose.Schema.Types.ObjectId, ref: "Shift", required: true },
-    manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    // manager: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     date: { type: Date, default: () => new Date() },
   },
   { timestamps: true }

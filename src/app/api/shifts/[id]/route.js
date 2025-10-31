@@ -17,7 +17,7 @@ export async function PUT(request, context) {
 
     const updated = await Shift.findByIdAndUpdate(id, body, {
       new: true,
-    }).populate("manager", "firstName lastName email");
+    });
 
     if (!updated) {
       return NextResponse.json(

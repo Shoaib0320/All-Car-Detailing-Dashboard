@@ -21,9 +21,7 @@ const ShiftSchema = new mongoose.Schema(
     name: { type: String, required: true },
     startTime: { type: String, required: true }, // "09:00"
     endTime: { type: String, required: true },   // "17:00"
-    hours: { type: Number, required: true },     // 8, 12 etc.
     days: { type: [String], default: [] },       // ["Mon","Tue"...] or ["Mon-Fri"]
-    manager: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }
 );
