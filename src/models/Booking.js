@@ -99,6 +99,10 @@ const BookingSchema = new mongoose.Schema(
       enum: Object.values(BookingStatus),
       default: BookingStatus.PENDING,
     },
+    cancellationReason: {
+      type: String,
+      default: null, // Ya isko bas 'type: String' bhi rakh saktay hain
+    },
   },
   { timestamps: true }
 );
