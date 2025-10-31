@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import User from '@/Models/User';
-import Role from '@/Models/Role';
+import User from '@/models/User';
+import Role from '@/models/Role';
 import { verifyToken } from '@/lib/jwt';
 
 // GET all users (with pagination, filtering, sorting)

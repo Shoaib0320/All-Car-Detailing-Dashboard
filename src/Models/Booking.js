@@ -7,6 +7,7 @@ export const BookingStatus = {
   IN_PROGRESS: "in-progress",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
+  RESCHEDULED: "rescheduled",
 };
 
 // Package Schema
