@@ -251,7 +251,7 @@ export const emailTemplates = {
       Support Email: support@yourcompany.com
       Phone: +1-234-567-8900
       
-      © 2024 Your Company Name. All rights reserved.
+      © 2025 Your Company Name. All rights reserved.
     `
   })
 };
