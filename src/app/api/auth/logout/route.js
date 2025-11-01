@@ -46,7 +46,6 @@
 
 
 import { NextResponse } from "next/server";
-// 'next/headers' se cookies import karne ki zaroorat nahi hai
 
 export async function POST(req) {
   try {
@@ -59,7 +58,7 @@ export async function POST(req) {
     // 2. Us response par cookie ko clear (expire) karein
     response.cookies.set("token", "", {
       httpOnly: true,
-      expires: new Date(0), // Fauran expire kar dein
+      expires: new Date(0),
       path: "/",
     });
 
