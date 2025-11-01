@@ -8,7 +8,7 @@
 // import { Alert, AlertDescription } from "@/components/ui/alert.jsx";
 // import { Input } from "@/components/ui/input.jsx";
 // import { Label } from "@/components/ui/label.jsx";
-// import { User, Shield, CheckSquare, Square, Plus, Trash2, Power } from "lucide-react";
+// import { User, Shield, CheckSquare, Square, Plus, Trash2, Power, Edit } from "lucide-react";
 // import {
 //   Select,
 //   SelectContent,
@@ -28,7 +28,6 @@
 //   // Users state
 //   const [users, setUsers] = useState([]);
 //   const [roles, setRoles] = useState([]);
-//   const [rolesLoading, setRolesLoading] = useState(true);
 
 //   // User form state
 //   const [userForm, setUserForm] = useState({
@@ -36,6 +35,19 @@
 //     lastName: '',
 //     email: '',
 //     password: '',
+//     phone: '',
+//     department: '',
+//     position: '',
+//     employeeId: '',
+//     role: ''
+//   });
+
+//   // Edit user state
+//   const [editingUser, setEditingUser] = useState(null);
+//   const [editUserForm, setEditUserForm] = useState({
+//     firstName: '',
+//     lastName: '',
+//     email: '',
 //     phone: '',
 //     department: '',
 //     position: '',
@@ -114,6 +126,13 @@
 //     setLoading(true);
 
 //     try {
+//       // Validate role selection
+//       if (!userForm.role) {
+//         showMessage('error', 'Please select a role');
+//         setLoading(false);
+//         return;
+//       }
+
 //       const response = await fetch('/api/users', {
 //         method: 'POST',
 //         headers: {
@@ -146,6 +165,69 @@
 //     } finally {
 //       setLoading(false);
 //     }
+//   };
+
+//   // Edit user handlers
+//   const handleEditUser = (user) => {
+//     setEditingUser(user);
+//     setEditUserForm({
+//       firstName: user.firstName,
+//       lastName: user.lastName,
+//       email: user.email,
+//       phone: user.phone || '',
+//       department: user.department || '',
+//       position: user.position || '',
+//       employeeId: user.employeeId || '',
+//       role: user.role?.name || ''
+//     });
+//   };
+
+//   const handleEditUserFormChange = (e) => {
+//     const { name, value } = e.target;
+//     setEditUserForm(prev => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleEditUserSubmit = async (e) => {
+//     e.preventDefault();
+//     setLoading(true);
+
+//     try {
+//       const response = await fetch(`/api/users/${editingUser._id}`, {
+//         method: 'PUT',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify(editUserForm),
+//       });
+
+//       const data = await response.json();
+
+//       if (data.success) {
+//         showMessage('success', 'User updated successfully');
+//         setEditingUser(null);
+//         loadUsers();
+//       } else {
+//         showMessage('error', data.error || 'Failed to update user');
+//       }
+//     } catch (error) {
+//       showMessage('error', 'Failed to update user');
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const cancelEdit = () => {
+//     setEditingUser(null);
+//     setEditUserForm({
+//       firstName: '',
+//       lastName: '',
+//       email: '',
+//       phone: '',
+//       department: '',
+//       position: '',
+//       employeeId: '',
+//       role: ''
+//     });
 //   };
 
 //   // Role form handlers
@@ -444,19 +526,21 @@
 //               {/* Users Tab */}
 //               {activeTab === 'users' && (
 //                 <div className="space-y-8">
-//                   {/* Create User Form */}
+//                   {/* Create/Edit User Form */}
 //                   <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-blue-50/50">
 //                     <CardHeader className="pb-4 border-b bg-white/50">
 //                       <div className="flex items-center gap-2">
-//                         <Plus className="h-5 w-5 text-blue-600" />
-//                         <CardTitle className="text-xl font-semibold text-gray-900">Create New User</CardTitle>
+//                         {editingUser ? <Edit className="h-5 w-5 text-blue-600" /> : <Plus className="h-5 w-5 text-blue-600" />}
+//                         <CardTitle className="text-xl font-semibold text-gray-900">
+//                           {editingUser ? 'Edit User' : 'Create New User'}
+//                         </CardTitle>
 //                       </div>
 //                       <CardDescription>
-//                         Add a new user to the system with appropriate role and permissions
+//                         {editingUser ? 'Update user information' : 'Add a new user to the system with appropriate role and permissions'}
 //                       </CardDescription>
 //                     </CardHeader>
 //                     <CardContent className="pt-6">
-//                       <form onSubmit={handleUserSubmit} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+//                       <form onSubmit={editingUser ? handleEditUserSubmit : handleUserSubmit} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 //                         <div className="space-y-2">
 //                           <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
 //                             First Name *
@@ -466,8 +550,8 @@
 //                             name="firstName"
 //                             id="firstName"
 //                             required
-//                             value={userForm.firstName}
-//                             onChange={handleUserFormChange}
+//                             value={editingUser ? editUserForm.firstName : userForm.firstName}
+//                             onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
 //                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
 //                             placeholder="Enter first name"
 //                           />
@@ -482,8 +566,8 @@
 //                             name="lastName"
 //                             id="lastName"
 //                             required
-//                             value={userForm.lastName}
-//                             onChange={handleUserFormChange}
+//                             value={editingUser ? editUserForm.lastName : userForm.lastName}
+//                             onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
 //                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
 //                             placeholder="Enter last name"
 //                           />
@@ -498,29 +582,32 @@
 //                             name="email"
 //                             id="email"
 //                             required
-//                             value={userForm.email}
-//                             onChange={handleUserFormChange}
+//                             value={editingUser ? editUserForm.email : userForm.email}
+//                             onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
 //                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
 //                             placeholder="Enter email address"
+//                             disabled={editingUser}
 //                           />
 //                         </div>
 
-//                         <div className="space-y-2">
-//                           <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-//                             Password *
-//                           </Label>
-//                           <Input
-//                             type="password"
-//                             name="password"
-//                             id="password"
-//                             required
-//                             minLength="6"
-//                             value={userForm.password}
-//                             onChange={handleUserFormChange}
-//                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-//                             placeholder="Enter password"
-//                           />
-//                         </div>
+//                         {!editingUser && (
+//                           <div className="space-y-2">
+//                             <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+//                               Password *
+//                             </Label>
+//                             <Input
+//                               type="password"
+//                               name="password"
+//                               id="password"
+//                               required
+//                               minLength="6"
+//                               value={userForm.password}
+//                               onChange={handleUserFormChange}
+//                               className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+//                               placeholder="Enter password"
+//                             />
+//                           </div>
+//                         )}
 
 //                         <div className="space-y-2">
 //                           <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
@@ -530,8 +617,8 @@
 //                             type="text"
 //                             name="phone"
 //                             id="phone"
-//                             value={userForm.phone}
-//                             onChange={handleUserFormChange}
+//                             value={editingUser ? editUserForm.phone : userForm.phone}
+//                             onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
 //                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
 //                             placeholder="Enter phone number"
 //                           />
@@ -541,7 +628,13 @@
 //                           <Label htmlFor="role" className="text-sm font-medium text-gray-700">
 //                             Role *
 //                           </Label>
-//                           <Select value={userForm.role} onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value }))}>
+//                           <Select 
+//                             value={editingUser ? editUserForm.role : userForm.role} 
+//                             onValueChange={(value) => editingUser 
+//                               ? setEditUserForm(prev => ({ ...prev, role: value }))
+//                               : setUserForm(prev => ({ ...prev, role: value }))
+//                             }
+//                           >
 //                             <SelectTrigger className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
 //                               <SelectValue placeholder="Select a role" />
 //                             </SelectTrigger>
@@ -569,52 +662,7 @@
 //                           </Select>
 //                         </div>
 
-//                         <div className="space-y-2">
-//                           <Label htmlFor="department" className="text-sm font-medium text-gray-700">
-//                             Department
-//                           </Label>
-//                           <Input
-//                             type="text"
-//                             name="department"
-//                             id="department"
-//                             value={userForm.department}
-//                             onChange={handleUserFormChange}
-//                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-//                             placeholder="Enter department"
-//                           />
-//                         </div>
-
-//                         <div className="space-y-2">
-//                           <Label htmlFor="position" className="text-sm font-medium text-gray-700">
-//                             Position
-//                           </Label>
-//                           <Input
-//                             type="text"
-//                             name="position"
-//                             id="position"
-//                             value={userForm.position}
-//                             onChange={handleUserFormChange}
-//                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-//                             placeholder="Enter position"
-//                           />
-//                         </div>
-
-//                         <div className="space-y-2">
-//                           <Label htmlFor="employeeId" className="text-sm font-medium text-gray-700">
-//                             Employee ID
-//                           </Label>
-//                           <Input
-//                             type="text"
-//                             name="employeeId"
-//                             id="employeeId"
-//                             value={userForm.employeeId}
-//                             onChange={handleUserFormChange}
-//                             className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-//                             placeholder="Enter employee ID"
-//                           />
-//                         </div>
-
-//                         <div className="sm:col-span-2 lg:col-span-3 pt-4">
+//                         <div className="sm:col-span-2 lg:col-span-3 pt-4 flex gap-3">
 //                           <Button
 //                             type="submit"
 //                             disabled={loading}
@@ -623,15 +671,25 @@
 //                             {loading ? (
 //                               <div className="flex items-center gap-2">
 //                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-//                                 Creating User...
+//                                 {editingUser ? 'Updating User...' : 'Creating User...'}
 //                               </div>
 //                             ) : (
 //                               <div className="flex items-center gap-2">
-//                                 <Plus className="h-4 w-4" />
-//                                 Create User
+//                                 {editingUser ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+//                                 {editingUser ? 'Update User' : 'Create User'}
 //                               </div>
 //                             )}
 //                           </Button>
+//                           {editingUser && (
+//                             <Button
+//                               type="button"
+//                               variant="outline"
+//                               onClick={cancelEdit}
+//                               className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-6 rounded-lg transition-colors"
+//                             >
+//                               Cancel
+//                             </Button>
+//                           )}
 //                         </div>
 //                       </form>
 //                     </CardContent>
@@ -687,6 +745,13 @@
 //                               </div>
 //                             </div>
 //                             <div className="flex items-center space-x-3">
+//                               <button
+//                                 onClick={() => handleEditUser(userItem)}
+//                                 className="inline-flex items-center px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-medium transition-colors border border-blue-200"
+//                               >
+//                                 <Edit className="h-4 w-4 mr-1" />
+//                                 Edit
+//                               </button>
 //                               <button
 //                                 onClick={() => handleToggleUserStatus(userItem._id, userItem.isActive)}
 //                                 className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${userItem.isActive
@@ -948,6 +1013,11 @@
 // }
 
 
+
+
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -958,7 +1028,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.j
 import { Alert, AlertDescription } from "@/components/ui/alert.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
-import { User, Shield, CheckSquare, Square, Plus, Trash2, Power, Edit } from "lucide-react";
+import { User, Shield, CheckSquare, Square, Plus, Trash2, Power, Edit, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -968,6 +1038,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Users() {
   const { user, hasPermission } = useAuth();
@@ -978,6 +1055,10 @@ export default function Users() {
   // Users state
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
+
+  // Dialog states
+  const [userDialogOpen, setUserDialogOpen] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
   // User form state
   const [userForm, setUserForm] = useState({
@@ -994,16 +1075,6 @@ export default function Users() {
 
   // Edit user state
   const [editingUser, setEditingUser] = useState(null);
-  const [editUserForm, setEditUserForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    department: '',
-    position: '',
-    employeeId: '',
-    role: ''
-  });
 
   // Role form state
   const [roleForm, setRoleForm] = useState({
@@ -1095,17 +1166,8 @@ export default function Users() {
 
       if (data.success) {
         showMessage('success', 'User created successfully');
-        setUserForm({
-          firstName: '',
-          lastName: '',
-          email: '',
-          password: '',
-          phone: '',
-          department: '',
-          position: '',
-          employeeId: '',
-          role: ''
-        });
+        resetUserForm();
+        setUserDialogOpen(false);
         loadUsers();
       } else {
         showMessage('error', data.error || 'Failed to create user');
@@ -1120,21 +1182,18 @@ export default function Users() {
   // Edit user handlers
   const handleEditUser = (user) => {
     setEditingUser(user);
-    setEditUserForm({
+    setUserForm({
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      password: '', // Don't fill password for editing
       phone: user.phone || '',
       department: user.department || '',
       position: user.position || '',
       employeeId: user.employeeId || '',
-      role: user.role?.name || ''
+      role: user.role?._id || user.role || ''
     });
-  };
-
-  const handleEditUserFormChange = (e) => {
-    const { name, value } = e.target;
-    setEditUserForm(prev => ({ ...prev, [name]: value }));
+    setUserDialogOpen(true);
   };
 
   const handleEditUserSubmit = async (e) => {
@@ -1147,14 +1206,15 @@ export default function Users() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editUserForm),
+        body: JSON.stringify(userForm),
       });
 
       const data = await response.json();
 
       if (data.success) {
         showMessage('success', 'User updated successfully');
-        setEditingUser(null);
+        resetUserForm();
+        setUserDialogOpen(false);
         loadUsers();
       } else {
         showMessage('error', data.error || 'Failed to update user');
@@ -1166,18 +1226,29 @@ export default function Users() {
     }
   };
 
-  const cancelEdit = () => {
-    setEditingUser(null);
-    setEditUserForm({
+  const resetUserForm = () => {
+    setUserForm({
       firstName: '',
       lastName: '',
       email: '',
+      password: '',
       phone: '',
       department: '',
       position: '',
       employeeId: '',
       role: ''
     });
+    setEditingUser(null);
+  };
+
+  const openUserDialog = () => {
+    resetUserForm();
+    setUserDialogOpen(true);
+  };
+
+  const closeUserDialog = () => {
+    setUserDialogOpen(false);
+    resetUserForm();
   };
 
   // Role form handlers
@@ -1246,29 +1317,8 @@ export default function Users() {
 
       if (data.success) {
         showMessage('success', 'Role created successfully');
-        setRoleForm({
-          name: '',
-          description: '',
-          permissions: {
-            user: { view: false, create: false, edit: false, delete: false, export: false, approve: false, change_role: false },
-            category: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
-            product: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
-            order: { view: false, create: false, edit: false, delete: false, export: false, approve: false, update_status: false },
-            inventory: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
-            analytics: { view: false, export: false },
-            settings: { view: false, edit: false, manage_roles: false },
-            hr: { view: false, create: false, edit: false, delete: false, payroll: false, attendance: false, leave_approve: false },
-            finance: { view: false, create: false, edit: false, delete: false, approve_payments: false, export_reports: false },
-            crm: {
-              clients: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
-              leads: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
-              tickets: { view: false, create: false, edit: false, delete: false, export: false, approve: false }
-            },
-            website_bookings: { view: false, edit: false, manage_status: false, export: false, delete: false },
-            reports: { sales: false, finance: false, hr: false, performance: false, export_all: false },
-            progress: { view_own: false, view_all: false, export: false }
-          }
-        });
+        resetRoleForm();
+        setRoleDialogOpen(false);
         loadRoles();
       } else {
         showMessage('error', data.error || 'Failed to create role');
@@ -1278,6 +1328,42 @@ export default function Users() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetRoleForm = () => {
+    setRoleForm({
+      name: '',
+      description: '',
+      permissions: {
+        user: { view: false, create: false, edit: false, delete: false, export: false, approve: false, change_role: false },
+        category: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
+        product: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
+        order: { view: false, create: false, edit: false, delete: false, export: false, approve: false, update_status: false },
+        inventory: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
+        analytics: { view: false, export: false },
+        settings: { view: false, edit: false, manage_roles: false },
+        hr: { view: false, create: false, edit: false, delete: false, payroll: false, attendance: false, leave_approve: false },
+        finance: { view: false, create: false, edit: false, delete: false, approve_payments: false, export_reports: false },
+        crm: {
+          clients: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
+          leads: { view: false, create: false, edit: false, delete: false, export: false, approve: false },
+          tickets: { view: false, create: false, edit: false, delete: false, export: false, approve: false }
+        },
+        website_bookings: { view: false, edit: false, manage_status: false, export: false, delete: false },
+        reports: { sales: false, finance: false, hr: false, performance: false, export_all: false },
+        progress: { view_own: false, view_all: false, export: false }
+      }
+    });
+  };
+
+  const openRoleDialog = () => {
+    resetRoleForm();
+    setRoleDialogOpen(true);
+  };
+
+  const closeRoleDialog = () => {
+    setRoleDialogOpen(false);
+    resetRoleForm();
   };
 
   const handleDeleteUser = async (userId) => {
@@ -1476,182 +1562,24 @@ export default function Users() {
               {/* Users Tab */}
               {activeTab === 'users' && (
                 <div className="space-y-8">
-                  {/* Create/Edit User Form */}
-                  <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-blue-50/50">
-                    <CardHeader className="pb-4 border-b bg-white/50">
-                      <div className="flex items-center gap-2">
-                        {editingUser ? <Edit className="h-5 w-5 text-blue-600" /> : <Plus className="h-5 w-5 text-blue-600" />}
-                        <CardTitle className="text-xl font-semibold text-gray-900">
-                          {editingUser ? 'Edit User' : 'Create New User'}
-                        </CardTitle>
-                      </div>
-                      <CardDescription>
-                        {editingUser ? 'Update user information' : 'Add a new user to the system with appropriate role and permissions'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                      <form onSubmit={editingUser ? handleEditUserSubmit : handleUserSubmit} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                            First Name *
-                          </Label>
-                          <Input
-                            type="text"
-                            name="firstName"
-                            id="firstName"
-                            required
-                            value={editingUser ? editUserForm.firstName : userForm.firstName}
-                            onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder="Enter first name"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                            Last Name *
-                          </Label>
-                          <Input
-                            type="text"
-                            name="lastName"
-                            id="lastName"
-                            required
-                            value={editingUser ? editUserForm.lastName : userForm.lastName}
-                            onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder="Enter last name"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                            Email *
-                          </Label>
-                          <Input
-                            type="email"
-                            name="email"
-                            id="email"
-                            required
-                            value={editingUser ? editUserForm.email : userForm.email}
-                            onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder="Enter email address"
-                            disabled={editingUser}
-                          />
-                        </div>
-
-                        {!editingUser && (
-                          <div className="space-y-2">
-                            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                              Password *
-                            </Label>
-                            <Input
-                              type="password"
-                              name="password"
-                              id="password"
-                              required
-                              minLength="6"
-                              value={userForm.password}
-                              onChange={handleUserFormChange}
-                              className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                              placeholder="Enter password"
-                            />
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-                            Phone Number
-                          </Label>
-                          <Input
-                            type="text"
-                            name="phone"
-                            id="phone"
-                            value={editingUser ? editUserForm.phone : userForm.phone}
-                            onChange={editingUser ? handleEditUserFormChange : handleUserFormChange}
-                            className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder="Enter phone number"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="role" className="text-sm font-medium text-gray-700">
-                            Role *
-                          </Label>
-                          <Select 
-                            value={editingUser ? editUserForm.role : userForm.role} 
-                            onValueChange={(value) => editingUser 
-                              ? setEditUserForm(prev => ({ ...prev, role: value }))
-                              : setUserForm(prev => ({ ...prev, role: value }))
-                            }
-                          >
-                            <SelectTrigger className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
-                              <SelectValue placeholder="Select a role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectLabel>Available Roles</SelectLabel>
-                                {roles.map((role) => (
-                                  <SelectItem
-                                    key={role._id}
-                                    value={role.name}
-                                    disabled={!role.isActive}
-                                  >
-                                    <div className="flex items-center justify-between w-full">
-                                      <span className="capitalize">
-                                        {role.name.replace(/_/g, ' ')}
-                                      </span>
-                                      {!role.isActive && (
-                                        <span className="text-xs text-red-500 ml-2">(Inactive)</span>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="sm:col-span-2 lg:col-span-3 pt-4 flex gap-3">
-                          <Button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed shadow-sm"
-                          >
-                            {loading ? (
-                              <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                {editingUser ? 'Updating User...' : 'Creating User...'}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                {editingUser ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                                {editingUser ? 'Update User' : 'Create User'}
-                              </div>
-                            )}
-                          </Button>
-                          {editingUser && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={cancelEdit}
-                              className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-6 rounded-lg transition-colors"
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                        </div>
-                      </form>
-                    </CardContent>
-                  </Card>
-
-                  {/* Users List */}
+                  {/* Users List Header with Add Button */}
                   <Card className="border-0 shadow-sm">
                     <CardHeader className="pb-4 border-b bg-white/50">
-                      <CardTitle className="text-xl font-semibold text-gray-900">All Users</CardTitle>
-                      <CardDescription>
-                        Manage existing users and their account status
-                      </CardDescription>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-xl font-semibold text-gray-900">All Users</CardTitle>
+                          <CardDescription>
+                            Manage existing users and their account status
+                          </CardDescription>
+                        </div>
+                        <Button
+                          onClick={openUserDialog}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add User
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="pt-6">
                       <div className="space-y-4">
@@ -1733,175 +1661,24 @@ export default function Users() {
               {/* Roles Tab */}
               {activeTab === 'roles' && hasPermission('user', 'create') && (
                 <div className="space-y-8">
-                  {/* Create Role Form */}
-                  <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-purple-50/50">
-                    <CardHeader className="pb-4 border-b bg-white/50">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-5 w-5 text-purple-600" />
-                        <CardTitle className="text-xl font-semibold text-gray-900">Create New Role</CardTitle>
-                      </div>
-                      <CardDescription>
-                        Define a new role with specific permissions and access levels
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-6">
-                      <form onSubmit={handleRoleSubmit} className="space-y-8">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                          <div className="space-y-2">
-                            <Label htmlFor="roleName" className="text-sm font-medium text-gray-700">
-                              Role Name *
-                            </Label>
-                            <Input
-                              type="text"
-                              name="name"
-                              id="roleName"
-                              required
-                              value={roleForm.name}
-                              onChange={handleRoleFormChange}
-                              className="focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                              placeholder="e.g., admin, manager, support"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="description" className="text-sm font-medium text-gray-700">
-                              Description *
-                            </Label>
-                            <Input
-                              type="text"
-                              name="description"
-                              id="description"
-                              required
-                              value={roleForm.description}
-                              onChange={handleRoleFormChange}
-                              className="focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                              placeholder="Brief description of the role"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Permissions Section */}
-                        <div className="border-t pt-8">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-                            <div>
-                              <h3 className="text-xl font-semibold text-gray-900">Permissions Configuration</h3>
-                              <p className="text-gray-600 mt-1">
-                                Select the permissions for this role across different modules
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => permissionModules.forEach(module => handleSelectAll(module.name))}
-                                className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
-                              >
-                                <CheckSquare className="h-4 w-4" />
-                                Select All
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => permissionModules.forEach(module => handleDeselectAll(module.name))}
-                                className="flex items-center gap-2 border-red-200 text-red-700 hover:bg-red-50"
-                              >
-                                <Square className="h-4 w-4" />
-                                Clear All
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                            {permissionModules.map((module) => (
-                              <Card key={module.name} className="border border-gray-200 hover:shadow-md transition-shadow">
-                                <CardHeader className="pb-3 bg-slate-50/50">
-                                  <div className="flex items-center justify-between">
-                                    <CardTitle className="text-sm font-semibold capitalize text-gray-900">
-                                      {module.title}
-                                    </CardTitle>
-                                    <div className="flex gap-1">
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleSelectAll(module.name)}
-                                        className="h-6 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
-                                      >
-                                        All
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleDeselectAll(module.name)}
-                                        className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                      >
-                                        None
-                                      </Button>
-                                    </div>
-                                  </div>
-                                  <CardDescription className="text-xs">
-                                    {module.description}
-                                  </CardDescription>
-                                </CardHeader>
-                                <CardContent className="pt-3">
-                                  <div className="grid grid-cols-1 gap-2">
-                                    {module.permissions.map((action) => (
-                                      <label
-                                        key={action}
-                                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-                                      >
-                                        <input
-                                          type="checkbox"
-                                          name={`permissions.${module.name}.${action}`}
-                                          checked={roleForm.permissions[module.name][action]}
-                                          onChange={handleRoleFormChange}
-                                          className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 focus:ring-2"
-                                        />
-                                        <span className="text-sm font-medium capitalize text-gray-700">
-                                          {action.replace(/_/g, ' ')}
-                                        </span>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end pt-6 border-t">
-                          <Button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-8 rounded-lg transition-colors disabled:bg-purple-400 disabled:cursor-not-allowed shadow-sm"
-                          >
-                            {loading ? (
-                              <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Creating Role...
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Shield className="h-4 w-4" />
-                                Create Role
-                              </div>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </CardContent>
-                  </Card>
-
-                  {/* Roles List */}
+                  {/* Roles List Header with Add Button */}
                   <Card className="border-0 shadow-sm">
                     <CardHeader className="pb-4 border-b bg-white/50">
-                      <CardTitle className="text-xl font-semibold text-gray-900">All Roles</CardTitle>
-                      <CardDescription>
-                        Overview of existing roles and their permissions
-                      </CardDescription>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-xl font-semibold text-gray-900">All Roles</CardTitle>
+                          <CardDescription>
+                            Overview of existing roles and their permissions
+                          </CardDescription>
+                        </div>
+                        <Button
+                          onClick={openRoleDialog}
+                          className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors shadow-sm flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Role
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="pt-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -1958,6 +1735,340 @@ export default function Users() {
           </Tabs>
         </Card>
       </div>
+
+      {/* User Dialog */}
+      <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              {editingUser ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+              {editingUser ? 'Edit User' : 'Create New User'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingUser ? 'Update user information' : 'Add a new user to the system with appropriate role and permissions'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={editingUser ? handleEditUserSubmit : handleUserSubmit} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                First Name *
+              </Label>
+              <Input
+                type="text"
+                name="firstName"
+                id="firstName"
+                required
+                value={userForm.firstName}
+                onChange={handleUserFormChange}
+                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Enter first name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                Last Name *
+              </Label>
+              <Input
+                type="text"
+                name="lastName"
+                id="lastName"
+                required
+                value={userForm.lastName}
+                onChange={handleUserFormChange}
+                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Enter last name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email *
+              </Label>
+              <Input
+                type="email"
+                name="email"
+                id="email"
+                required
+                value={userForm.email}
+                onChange={handleUserFormChange}
+                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Enter email address"
+                disabled={editingUser}
+              />
+            </div>
+
+            {!editingUser && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password *
+                </Label>
+                <Input
+                  type="password"
+                  name="password"
+                  id="password"
+                  required
+                  minLength="6"
+                  value={userForm.password}
+                  onChange={handleUserFormChange}
+                  className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="Enter password"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                Phone Number
+              </Label>
+              <Input
+                type="text"
+                name="phone"
+                id="phone"
+                value={userForm.phone}
+                onChange={handleUserFormChange}
+                className="focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+                Role *
+              </Label>
+              <Select 
+                value={userForm.role} 
+                onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value }))}
+              >
+                <SelectTrigger className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Available Roles</SelectLabel>
+                    {roles.map((role) => (
+                      <SelectItem
+                        key={role._id}
+                        value={role._id}
+                        disabled={!role.isActive}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="capitalize">
+                            {role.name.replace(/_/g, ' ')}
+                          </span>
+                          {!role.isActive && (
+                            <span className="text-xs text-red-500 ml-2">(Inactive)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-3 pt-4 flex gap-3 justify-end border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeUserDialog}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-6 rounded-lg transition-colors"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed shadow-sm"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {editingUser ? 'Updating User...' : 'Creating User...'}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {editingUser ? <Edit className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    {editingUser ? 'Update User' : 'Create User'}
+                  </div>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Role Dialog */}
+      <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Shield className="h-5 w-5" />
+              Create New Role
+            </DialogTitle>
+            <DialogDescription>
+              Define a new role with specific permissions and access levels
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleRoleSubmit} className="space-y-6 mt-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="roleName" className="text-sm font-medium text-gray-700">
+                  Role Name *
+                </Label>
+                <Input
+                  type="text"
+                  name="name"
+                  id="roleName"
+                  required
+                  value={roleForm.name}
+                  onChange={handleRoleFormChange}
+                  className="focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                  placeholder="e.g., admin, manager, support"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                  Description *
+                </Label>
+                <Input
+                  type="text"
+                  name="description"
+                  id="description"
+                  required
+                  value={roleForm.description}
+                  onChange={handleRoleFormChange}
+                  className="focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                  placeholder="Brief description of the role"
+                />
+              </div>
+            </div>
+
+            {/* Permissions Section */}
+            <div className="border-t pt-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Permissions Configuration</h3>
+                  <p className="text-gray-600 mt-1">
+                    Select the permissions for this role across different modules
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => permissionModules.forEach(module => handleSelectAll(module.name))}
+                    className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                    Select All
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => permissionModules.forEach(module => handleDeselectAll(module.name))}
+                    className="flex items-center gap-2 border-red-200 text-red-700 hover:bg-red-50"
+                  >
+                    <Square className="h-4 w-4" />
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 max-h-96 overflow-y-auto p-2">
+                {permissionModules.map((module) => (
+                  <Card key={module.name} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3 bg-slate-50/50">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-semibold capitalize text-gray-900">
+                          {module.title}
+                        </CardTitle>
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSelectAll(module.name)}
+                            className="h-6 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            All
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeselectAll(module.name)}
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            None
+                          </Button>
+                        </div>
+                      </div>
+                      <CardDescription className="text-xs">
+                        {module.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-3">
+                      <div className="grid grid-cols-1 gap-2">
+                        {module.permissions.map((action) => (
+                          <label
+                            key={action}
+                            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              name={`permissions.${module.name}.${action}`}
+                              checked={roleForm.permissions[module.name][action]}
+                              onChange={handleRoleFormChange}
+                              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 focus:ring-2"
+                            />
+                            <span className="text-sm font-medium capitalize text-gray-700">
+                              {action.replace(/_/g, ' ')}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-6 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeRoleDialog}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2.5 px-6 rounded-lg transition-colors"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-8 rounded-lg transition-colors disabled:bg-purple-400 disabled:cursor-not-allowed shadow-sm"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating Role...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Create Role
+                  </div>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
