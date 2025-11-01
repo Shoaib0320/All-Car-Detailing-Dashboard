@@ -76,7 +76,7 @@ export async function POST(request) {
     } = await request.json();
 
     // Validation
-    if (!promoCode || !discountPercentage || !agentId || !validUntil) {
+    if (!promoCode || !discountPercentage || !agentId ) {
       return NextResponse.json(
         { success: false, message: 'Required fields missing' },
         { status: 400 }
@@ -112,13 +112,13 @@ export async function POST(request) {
     }
 
     // Validate date
-    const validUntilDate = new Date(validUntil);
-    if (validUntilDate <= new Date()) {
-      return NextResponse.json(
-        { success: false, message: 'Valid until date must be in the future' },
-        { status: 400 }
-      );
-    }
+    // const validUntilDate = new Date(validUntil);
+    // if (validUntilDate <= new Date()) {
+    //   return NextResponse.json(
+    //     { success: false, message: 'Valid until date must be in the future' },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Create promo code
     const newPromoCode = await PromoCode.create({
@@ -126,7 +126,7 @@ export async function POST(request) {
       discountPercentage,
       agentId,
       maxUsage: maxUsage || 1,
-      validUntil: validUntilDate,
+      // validUntil: validUntilDate,
       description
     });
 
