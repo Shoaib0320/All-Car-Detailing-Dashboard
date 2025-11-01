@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/Models/User";
 import Role from "@/Models/Role";
 import { verifyToken } from "@/lib/jwt";
+import mongoose from "mongoose"; // ✅ Import mongoose
 
 // GET all users (with pagination, filtering, sorting)
 export async function GET(request) {
@@ -146,11 +147,60 @@ export async function POST(request) {
 
     const body = await request.json();
 
-    // Create user
-    const user = await User.create({
-      ...body,
+    // Find the role by name and get its ID
+    let roleId = body.role;
+    
+    // Check if role is provided and if it's not a valid ObjectId
+    if (body.role && !mongoose.Types.ObjectId.isValid(body.role)) {
+      // If it's not a valid ObjectId, try to find role by name
+      const role = await Role.findOne({ name: body.role });
+      if (role) {
+        roleId = role._id;
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Invalid role specified",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check if user with email already exists
+    const existingUser = await User.findOne({ email: body.email.toLowerCase() });
+    if (existingUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "User with this email already exists",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Create user with proper role ID
+    const userData = {
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email.toLowerCase(),
+      password: body.password,
+      phone: body.phone,
+      // department: body.department,
+      // position: body.position,
+      // employeeId: body.employeeId,
+      role: roleId,
       createdBy: currentUser._id,
+    };
+
+    // Remove empty fields
+    Object.keys(userData).forEach(key => {
+      if (userData[key] === undefined || userData[key] === '') {
+        delete userData[key];
+      }
     });
+
+    const user = await User.create(userData);
 
     const newUser = await User.findById(user._id)
       .populate("role")
@@ -168,10 +218,23 @@ export async function POST(request) {
     console.error("POST User Error:", error);
 
     if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
       return NextResponse.json(
         {
           success: false,
-          error: "User with this email already exists",
+          error: `User with this ${field} already exists`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Validation failed",
+          details: errors,
         },
         { status: 400 }
       );
