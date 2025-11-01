@@ -1,7 +1,7 @@
 // /app/api/attendance/export/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Attendance from "@/models/Attendance";
+import Attendance from "@/Models/Attendance";
 
 function safe(v) {
   if (v === null || v === undefined) return "";

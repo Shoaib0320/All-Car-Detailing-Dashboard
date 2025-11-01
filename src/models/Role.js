@@ -13,20 +13,20 @@ const roleSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Role name is required'],
-    unique: true,
-    trim: true,
-    enum: [
-      'super_admin',
-      'admin',
-      'manager',
-      'sales_manager',
-      'support',
-      'hr_manager',
-      'finance_manager',
-      'viewer',
-      'agent',
-      'employee'
-    ]
+    // unique: true,
+    // trim: true,
+    // enum: [
+    //   'super_admin',
+    //   'admin',
+    //   'manager',
+    //   'sales_manager',
+    //   'support',
+    //   'hr_manager',
+    //   'finance_manager',
+    //   'viewer',
+    //   'agent',
+    //   'employee'
+    // ]
   },
   description: {
     type: String,
