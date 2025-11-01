@@ -37,7 +37,7 @@ const promoCodeSchema = new mongoose.Schema({
   },
   validUntil: {
     type: Date,
-    required: true
+    // required: true
   },
   description: {
     type: String,

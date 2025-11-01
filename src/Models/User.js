@@ -70,21 +70,21 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
 
-    // Additional Information
-    department: {
-      type: String,
-      trim: true,
-    },
-    position: {
-      type: String,
-      trim: true,
-    },
-    employeeId: {
-      type: String,
-      trim: true,
-      unique: true, // ✅ already creates index — no need for .index({ employeeId: 1 })
-      sparse: true,
-    },
+    // // Additional Information
+    // department: {
+    //   type: String,
+    //   trim: true,
+    // },
+    // position: {
+    //   type: String,
+    //   trim: true,
+    // },
+    // employeeId: {
+    //   type: String,
+    //   trim: true,
+    //   unique: true, // ✅ already creates index — no need for .index({ employeeId: 1 })
+    //   sparse: true,
+    // },
 
     // Security
     passwordChangedAt: Date,

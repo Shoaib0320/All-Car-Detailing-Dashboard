@@ -150,5 +150,108 @@ export const emailTemplates = {
       
       If you didn't request this, please ignore this email.
     `
+  }),
+  // New templates for agent updates
+  passwordUpdate: (agentName, agentId) => ({
+    subject: 'Your Password Has Been Updated',
+    html: `
+      <div>
+        <h2>Password Updated Successfully</h2>
+        <p>Dear ${agentName},</p>
+        <p>Your password for agent account (ID: ${agentId}) has been successfully updated.</p>
+        <p>If you did not request this change, please contact support immediately.</p>
+        <br/>
+        <p>Best regards,<br/>Management Team</p>
+      </div>
+    `,
+    text: `Password Updated - Dear ${agentName}, your password for agent account (ID: ${agentId}) has been updated.`
+  }),
+
+  profileUpdate: (agentName, agentId) => ({
+    subject: 'Your Profile Has Been Updated',
+    html: `
+      <div>
+        <h2>Profile Updated</h2>
+        <p>Dear ${agentName},</p>
+        <p>Your agent profile (ID: ${agentId}) has been successfully updated.</p>
+        <p>If you did not request these changes, please contact support immediately.</p>
+        <br/>
+        <p>Best regards,<br/>Management Team</p>
+      </div>
+    `,
+    text: `Profile Updated - Dear ${agentName}, your agent profile (ID: ${agentId}) has been updated.`
+  }),
+
+  // accountStatus: (agentName, agentId, status) => ({
+  //   subject: `Your Account Has Been ${status}`,
+  //   html: `
+  //     <div>
+  //       <h2>Account ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
+  //       <p>Dear ${agentName},</p>
+  //       <p>Your agent account (ID: ${agentId}) has been ${status}.</p>
+  //       <p>If you believe this is an error, please contact support.</p>
+  //       <br/>
+  //       <p>Best regards,<br/>Management Team</p>
+  //     </div>
+  //   `,
+  //   text: `Account ${status} - Dear ${agentName}, your agent account (ID: ${agentId}) has been ${status}.`
+  // })
+   accountStatus: (agentName, agentId, status) => ({
+    subject: `🔔 Your Agent Account Has Been ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; color: white;">
+          <h1 style="margin: 0; font-size: 24px;">Account ${status.charAt(0).toUpperCase() + status.slice(1)}</h1>
+        </div>
+        
+        <div style="padding: 30px; background: #f9f9f9;">
+          <p>Dear <strong>${agentName}</strong>,</p>
+          
+          <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid ${status === 'activated' ? '#10B981' : '#EF4444'};">
+            <p>Your agent account <strong>(ID: ${agentId})</strong> has been <strong style="color: ${status === 'activated' ? '#10B981' : '#EF4444'};">${status}</strong>.</p>
+            
+            ${status === 'activated' 
+              ? `<p>✅ You can now access all agent features and log in to the system.</p>`
+              : `<p>❌ Your account access has been temporarily suspended. You will not be able to log in until your account is reactivated.</p>`
+            }
+          </div>
+          
+          <p style="margin-top: 20px;">
+            If you believe this is an error or have any questions, please contact our support team immediately.
+          </p>
+          
+          <div style="margin-top: 30px; padding: 15px; background: #e8f4fd; border-radius: 5px;">
+            <p style="margin: 0; font-size: 14px; color: #0369a1;">
+              <strong>Need Help?</strong><br/>
+              Contact Support: support@yourcompany.com<br/>
+              Phone: +1-234-567-8900
+            </p>
+          </div>
+        </div>
+        
+        <div style="background: #333; color: white; padding: 20px; text-align: center; font-size: 12px;">
+          <p style="margin: 0;">&copy; 2024 Your Company Name. All rights reserved.</p>
+        </div>
+      </div>
+    `,
+    text: `
+      Account ${status.toUpperCase()}
+      
+      Dear ${agentName},
+      
+      Your agent account (ID: ${agentId}) has been ${status}.
+      
+      ${status === 'activated' 
+        ? 'You can now access all agent features and log in to the system.' 
+        : 'Your account access has been temporarily suspended. You will not be able to log in until your account is reactivated.'
+      }
+      
+      If you believe this is an error, please contact our support team immediately.
+      
+      Support Email: support@yourcompany.com
+      Phone: +1-234-567-8900
+      
+      © 2025 Your Company Name. All rights reserved.
+    `
   })
 };

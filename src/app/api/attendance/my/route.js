@@ -1,7 +1,7 @@
 // /app/api/attendance/my/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Attendance from "@/models/Attendance";
+import Attendance from "@/Models/Attendance";
 import { verifyToken } from "@/lib/jwt";
 
 export async function GET(request) {

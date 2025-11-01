@@ -56,9 +56,9 @@ export default function PromoCodesPage() {
     promoCode: '',
     discountPercentage: '',
     agentId: '',
-    maxUsage: 1,
-    validUntil: '',
-    description: ''
+    // maxUsage: 1,
+    // validUntil: '',
+    // description: ''
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -66,9 +66,9 @@ export default function PromoCodesPage() {
     promoCode: '',
     discountPercentage: '',
     agentId: '',
-    maxUsage: 1,
-    validUntil: '',
-    description: '',
+    // maxUsage: 1,
+    // validUntil: '',
+    // description: '',
     isActive: true
   });
 
@@ -167,9 +167,9 @@ export default function PromoCodesPage() {
         promoCode: '',
         discountPercentage: '',
         agentId: '',
-        maxUsage: 1,
-        validUntil: '',
-        description: ''
+        // maxUsage: 1,
+        // validUntil: '',
+        // description: ''
       });
       fetchPromoCodes(); // Refresh list
     } catch (error) {
@@ -190,9 +190,9 @@ export default function PromoCodesPage() {
         promoCode: editFormData.promoCode,
         discountPercentage: editFormData.discountPercentage,
         agentId: editFormData.agentId,
-        maxUsage: editFormData.maxUsage,
-        validUntil: editFormData.validUntil,
-        description: editFormData.description,
+        // maxUsage: editFormData.maxUsage,
+        // validUntil: editFormData.validUntil,
+        // description: editFormData.description,
         isActive: editFormData.isActive
       });
       toast.success('Promo code updated successfully!');
@@ -202,9 +202,9 @@ export default function PromoCodesPage() {
         promoCode: '',
         discountPercentage: '',
         agentId: '',
-        maxUsage: 1,
-        validUntil: '',
-        description: '',
+        // maxUsage: 1,
+        // validUntil: '',
+        // description: '',
         isActive: true
       });
       fetchPromoCodes(); // Refresh list
@@ -223,9 +223,9 @@ export default function PromoCodesPage() {
       promoCode: promo.promoCode,
       discountPercentage: promo.discountPercentage,
       agentId: promo.agentId?._id || promo.agentId,
-      maxUsage: promo.maxUsage,
-      validUntil: new Date(promo.validUntil).toISOString().slice(0, 16),
-      description: promo.description || '',
+      // maxUsage: promo.maxUsage,
+      // validUntil: new Date(promo.validUntil).toISOString().slice(0, 16),
+      // description: promo.description || '',
       isActive: promo.isActive
     });
     setShowEditForm(true);
@@ -303,13 +303,13 @@ export default function PromoCodesPage() {
                     className="flex-1 uppercase"
                     placeholder="e.g., SUMMER25"
                   />
-                  <Button 
+                  {/* <Button 
                     type="button" 
                     variant="outline" 
                     onClick={generatePromoCode}
                   >
                     Generate
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
 
@@ -350,7 +350,7 @@ export default function PromoCodesPage() {
               </div>
 
               {/* Max Usage */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="maxUsage">Max Usage</Label>
                 <Input
                   id="maxUsage"
@@ -363,7 +363,6 @@ export default function PromoCodesPage() {
                 />
               </div>
 
-              {/* Valid Until */}
               <div className="space-y-2">
                 <Label htmlFor="validUntil">Valid Until</Label>
                 <Input
@@ -376,7 +375,6 @@ export default function PromoCodesPage() {
                 />
               </div>
 
-              {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -387,7 +385,7 @@ export default function PromoCodesPage() {
                   rows="3"
                   placeholder="Enter promo code description (optional)"
                 />
-              </div>
+              </div> */}
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -473,7 +471,7 @@ export default function PromoCodesPage() {
             </div>
 
             {/* Max Usage */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="edit-maxUsage">Max Usage</Label>
               <Input
                 id="edit-maxUsage"
@@ -486,7 +484,6 @@ export default function PromoCodesPage() {
               />
             </div>
 
-            {/* Valid Until */}
             <div className="space-y-2">
               <Label htmlFor="edit-validUntil">Valid Until</Label>
               <Input
@@ -499,7 +496,6 @@ export default function PromoCodesPage() {
               />
             </div>
 
-            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
@@ -510,7 +506,7 @@ export default function PromoCodesPage() {
                 rows="3"
                 placeholder="Enter promo code description (optional)"
               />
-            </div>
+            </div> */}
 
             {/* Status */}
             <div className="space-y-2">
