@@ -1,7 +1,7 @@
 // app/api/shifts/[id]/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Shift from "@/models/Shift";
+import Shift from "@/Models/Shift";
 
 /* 🔹 UPDATE SHIFT */
 export async function PUT(request, context) {
