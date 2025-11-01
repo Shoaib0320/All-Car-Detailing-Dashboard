@@ -342,10 +342,9 @@
 //                 type="checkbox"
 //                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
 //               />
-              
+
 //             </div>
 
-            
 //           </div>
 
 //           <div>
@@ -378,9 +377,6 @@
 //   );
 // }
 
-
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -388,10 +384,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react"; 
-// import GCLogo from "/images/GCLogo.png";
-
-
+import { Eye, EyeOff } from "lucide-react";
+// import GCLogo from "@/../public/images/GCLogo.png";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -441,25 +435,21 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg space-y-8 border border-gray-100">
         {/* Logo */}
-        {/* <div className="flex justify-center">
+        <div className="flex justify-center">
           <Image
-            src={GCLogo}
-            alt="Logo"
-            width={64}
-            height={64}
-            className="rounded-lg shadow-sm"
-            priority
-          />
-        </div> */}
+  src="/images/GCLogo.png"
+  alt="Logo"
+  width={74}
+  height={74}
+  className="rounded-lg shadow-sm"
+  priority
+/>
+        </div>
 
         <div className="text-center">
-          <h2 className="mt-4 text-2xl font-bold text-gray-900">Sign in to your account</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{" "}
-            <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
-              back to home
-            </Link>
-          </p>
+          <h2 className="mt-4 text-2xl font-bold text-gray-900">
+            Sign in to your account
+          </h2>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -482,7 +472,10 @@ export default function LoginPage() {
 
           {/* Email Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Email address
             </label>
             <input
@@ -498,41 +491,38 @@ export default function LoginPage() {
           </div>
 
           {/* Password Field */}
-          <div className="relative">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          <div>
+            {" "}
+            {/* <-- Yahan se 'relative' hata diya */}
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Password
             </label>
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
-              placeholder="Enter your password"
-            />
-            {/* 👁️ Eye toggle button */}
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
+            {/* Sirf input aur button ke liye ek naya relative container banayein */}
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-10"
+                placeholder="Enter your password"
+              />
 
-          {/* Remember me checkbox */}
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700">
-              Remember me
-            </label>
+              {/* 👁️ Eye toggle button */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {/* Ab yeh icon bilkul input ke andar vertically center hoga */}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {/* Submit Button */}
@@ -551,6 +541,15 @@ export default function LoginPage() {
                 "Sign in"
               )}
             </button>
+            <p className="mt-2 text-sm text-gray-600">
+            Or{" "}
+            <Link
+              href="/"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              back to home
+            </Link>
+          </p>
           </div>
         </form>
       </div>
