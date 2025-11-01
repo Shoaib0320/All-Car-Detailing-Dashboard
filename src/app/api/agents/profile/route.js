@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import Agent from '@/Models/Agent';
 import connectDB from '@/lib/mongodb';
+import Agent from '@/Models/Agent';
 
 // GET - Get agent profile
 export async function GET(request) {
