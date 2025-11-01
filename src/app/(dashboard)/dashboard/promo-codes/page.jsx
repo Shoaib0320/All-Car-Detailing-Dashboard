@@ -56,9 +56,9 @@ export default function PromoCodesPage() {
     promoCode: '',
     discountPercentage: '',
     agentId: '',
-    maxUsage: 1,
-    validUntil: '',
-    description: ''
+    // maxUsage: 1,
+    // validUntil: '',
+    // description: ''
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -66,9 +66,9 @@ export default function PromoCodesPage() {
     promoCode: '',
     discountPercentage: '',
     agentId: '',
-    maxUsage: 1,
-    validUntil: '',
-    description: '',
+    // maxUsage: 1,
+    // validUntil: '',
+    // description: '',
     isActive: true
   });
 
