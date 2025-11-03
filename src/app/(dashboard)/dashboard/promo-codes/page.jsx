@@ -598,7 +598,7 @@ export default function PromoCodesPage() {
                     <TableHead>Promo Code</TableHead>
                     <TableHead>Discount</TableHead>
                     <TableHead>Agent</TableHead>
-                    <TableHead>Usage</TableHead>
+                    {/* <TableHead>Usage</TableHead> */}
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -616,9 +616,9 @@ export default function PromoCodesPage() {
                               {promo.description}
                             </div>
                           )}
-                          <div className="text-xs text-gray-400 mt-1">
+                          {/* <div className="text-xs text-gray-400 mt-1">
                             Valid until: {new Date(promo.validUntil).toLocaleDateString()}
-                          </div>
+                          </div> */}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -636,7 +636,7 @@ export default function PromoCodesPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <div className="space-y-2">
                           <div className="text-sm">
                             {promo.usedCount} / {promo.maxUsage}
@@ -646,7 +646,7 @@ export default function PromoCodesPage() {
                             className="h-2"
                           />
                         </div>
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <Badge 
@@ -658,7 +658,7 @@ export default function PromoCodesPage() {
                           >
                             {promo.isActive ? 'Active' : 'Inactive'}
                           </Badge>
-                          <Badge 
+                          {/* <Badge 
                             variant={isExpired(promo.validUntil) ? "destructive" : "outline"}
                             className={isExpired(promo.validUntil) 
                               ? "bg-red-100 text-red-800 hover:bg-red-100" 
@@ -666,7 +666,7 @@ export default function PromoCodesPage() {
                             }
                           >
                             {isExpired(promo.validUntil) ? 'Expired' : 'Valid'}
-                          </Badge>
+                          </Badge> */}
                         </div>
                       </TableCell>
                       <TableCell>
