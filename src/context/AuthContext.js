@@ -1,10 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/authService';
-import { useRouter } from 'next/navigation'; 
-
-
+import { createContext, useContext, useState, useEffect } from "react";
+import { authService } from "../services/authService";
+import { useRouter } from "next/navigation";
 
 const AuthContext = createContext();
 
@@ -16,22 +14,26 @@ export function AuthProvider({ children }) {
   const router = useRouter();
 
 
-  // Check if user is logged in on app start
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
+
   const checkAuthStatus = async () => {
     try {
       const response = await authService.getCurrentUser();
-      if (response.success) {
+
+      if (response.success) {       
         setUser(response.data.user);
         setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      // Clear any invalid tokens
-      logout();
+      console.log("Auth check: User is not authenticated.");
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -45,55 +47,32 @@ export function AuthProvider({ children }) {
       if (response.success) {
         setUser(response.data.user);
         setIsAuthenticated(true);
-        // Store token in localStorage for client-side API calls
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', response.data.token);
-        }
         return { success: true, message: response.message };
       }
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.error || 'Login failed'
+        message: error.response?.data?.error || "Login failed",
       };
     } finally {
       setLoading(false);
     }
   };
 
-  // const logout = async () => {
-  //   try {
-  //     await authService.logout();
-  //   } catch (error) {
-  //     console.error('Logout error:', error);
-  //   } finally {
-  //     // Clear token from localStorage
-  //     if (typeof window !== 'undefined') {
-  //       localStorage.removeItem('token');
-  //     }
-  //     setUser(null);
-  //     setIsAuthenticated(false);
-  //   }
-  // };
-
   const logout = async () => {
-  try {
-    await authService.logout();
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+      router.replace("/login");
     }
-    setUser(null);
-    setIsAuthenticated(false);
-    router.replace('/login');
-  }
-};
-
+  };
 
   const updateUser = (userData) => {
-    setUser(prev => ({ ...prev, ...userData }));
+    setUser((prev) => ({ ...prev, ...userData }));
   };
 
   const hasPermission = (module, action) => {
@@ -109,20 +88,16 @@ export function AuthProvider({ children }) {
     logout,
     updateUser,
     hasPermission,
-    checkAuthStatus
+    checkAuthStatus,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

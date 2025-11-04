@@ -362,6 +362,8 @@
 //   );
 // }
 
+
+
 "use client";
 
 import { useState } from "react";
@@ -463,10 +465,12 @@ export default function BookingDetailsDialog({
       setLoading(false);
     }
 
-    const handleClose = () => {
+    
+  };
+
+  const handleClose = () => {
     setReason("");
     onClose();    
-  };
   };
 
   return (
