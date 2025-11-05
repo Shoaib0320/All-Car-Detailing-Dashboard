@@ -311,7 +311,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    const shift = await Shift.findById(shiftId).populate("manager", "firstName lastName email");
+    const shift = await Shift.findById(shiftId)
     if (!shift) {
       return NextResponse.json({ success: false, message: "Shift not found" }, { status: 404 });
     }

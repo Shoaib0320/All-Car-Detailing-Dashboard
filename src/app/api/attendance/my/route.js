@@ -138,7 +138,7 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get("limit") || "20", 10);
     const records = await Attendance.find({ [queryField]: userId })
       .populate("shift", "name startTime endTime")
-      .populate("manager", "firstName lastName email")
+      // .populate("manager", "firstName lastName email")
       .sort({ createdAt: -1 })
       .limit(limit);
 
