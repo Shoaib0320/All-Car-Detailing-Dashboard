@@ -1,3 +1,4 @@
+//app/api/agents/profile/route.js
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -31,7 +32,7 @@ export async function GET(request) {
 // PUT - Update agent profile
 export async function PUT(request) {
   try {
-    await dbConnect();
+    await connectDB();
     
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     
