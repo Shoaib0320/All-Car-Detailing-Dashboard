@@ -11,6 +11,28 @@ export const generateToken = (payload) => {
   });
 };
 
+// Generate token for agent
+export const generateAgentToken = (agent) => {
+  return jwt.sign(
+    { 
+      agentId: agent.agentId,
+      id: agent._id,           // ✅ Use _id for consistency
+      email: agent.email,
+      type: 'agent'            // ✅ Add type to distinguish
+    }, 
+    JWT_SECRET, 
+    { expiresIn: '24h' }
+  );
+};
+
+// Get user ID from token (works for both user and agent)
+export const getUserIdFromToken = (decoded) => {
+  if (decoded.type === 'agent') {
+    return decoded.id;  // ✅ Agent ke liye id use karo
+  }
+  return decoded.userId || decoded.id;
+};
+
 // Verify token
 export const verifyToken = (token) => {
   try {
