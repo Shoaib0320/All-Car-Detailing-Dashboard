@@ -442,11 +442,12 @@ function parseShiftDateTime(baseDate, timeStr) {
   return dt;
 }
 
+// app/api/attendance/checkin/route.js
 export async function POST(request) {
   try {
     await connectDB();
 
-    // Get token from headers
+    // Authentication
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
@@ -460,98 +461,68 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { attendanceId, location, userType = 'agent' } = body;
+    const { shiftId, location, userType = 'agent' } = body;
 
     const userId = getUserIdFromToken(decoded);
 
+    // ✅ FIXED: Today's date range properly
     const now = new Date();
-    const todayStart = new Date(now); 
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(todayStart); 
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart);
     todayEnd.setDate(todayEnd.getDate() + 1);
 
-    let attendance;
-    if (attendanceId) {
-      attendance = await Attendance.findById(attendanceId).populate("shift");
+    // ✅ FIXED: Check if already checked in today - PROPER QUERY
+    const existingAttendance = await Attendance.findOne({
+      $or: [
+        { agent: userId },
+        { user: userId }
+      ],
+      checkInTime: { 
+        $gte: todayStart, 
+        $lt: todayEnd 
+      }
+    });
+
+    if (existingAttendance) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Already checked in for today." 
+      }, { status: 400 });
+    }
+
+    // Create new attendance
+    const attendanceData = {
+      shift: shiftId,
+      checkInTime: now,
+      checkInLocation: location || null,
+      status: 'present'
+    };
+
+    // ✅ FIXED: Assign to correct field based on userType
+    if (userType === 'agent') {
+      attendanceData.agent = userId;
     } else {
-      // Use userId from token
-      const query = {
-        checkInTime: { $gte: todayStart, $lt: todayEnd },
-      };
-
-      if (userType === 'agent') {
-        query.agent = userId;
-      } else {
-        query.user = userId;
-      }
-
-      attendance = await Attendance.findOne(query).populate("shift");
+      attendanceData.user = userId;
     }
 
-    if (!attendance || !attendance.checkInTime) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "No check-in found for today." 
-      }, { status: 400 });
-    }
-
-    if (attendance.checkOutTime) {
-      return NextResponse.json({ 
-        success: false, 
-        message: "Already checked-out." 
-      }, { status: 400 });
-    }
-
-    // ✅ FIXED: Allow check-out anytime after check-in (no shift end time restriction)
-    attendance.checkOutTime = now;
-    attendance.checkOutLocation = location || null;
-
-    // Compute overtime (optional - for reporting purposes)
-    const checkInDate = new Date(attendance.checkInTime);
-    const shift = await Shift.findById(attendance.shift);
-    
-    if (shift) {
-      const shiftStart = parseShiftDateTime(checkInDate, shift.startTime);
-      let shiftEnd = parseShiftDateTime(checkInDate, shift.endTime);
-      
-      if (shiftEnd <= shiftStart) {
-        shiftEnd.setDate(shiftEnd.getDate() + 1);
-      }
-
-      // Overtime calculation (for information only, doesn't block check-out)
-      if (attendance.checkOutTime > shiftEnd) {
-        const diffMs = attendance.checkOutTime.getTime() - shiftEnd.getTime();
-        const diffMin = Math.ceil(diffMs / (60 * 1000));
-        attendance.isOvertime = true;
-        attendance.overtimeMinutes = diffMin;
-      } else {
-        attendance.isOvertime = false;
-        attendance.overtimeMinutes = 0;
-      }
-    }
-
+    const attendance = new Attendance(attendanceData);
     await attendance.save();
 
+    // Populate and return
     const populated = await Attendance.findById(attendance._id)
       .populate("user", "firstName lastName email")
       .populate("agent", "agentName agentId email")
       .populate("shift", "name startTime endTime hours days")
       .populate("manager", "firstName lastName email");
 
-    // ✅ FIXED: Better success message
-    let successMessage = "Checked-out successfully";
-    if (attendance.isOvertime) {
-      successMessage = `Checked-out successfully (Overtime: ${attendance.overtimeMinutes} minutes)`;
-    }
-
     return NextResponse.json({ 
       success: true, 
-      message: successMessage, 
+      message: "Checked in successfully!", 
       data: populated 
     });
 
   } catch (error) {
-    console.error("POST /api/attendance/checkout error:", error);
+    console.error("POST /api/attendance/checkin error:", error);
     return NextResponse.json({ 
       success: false, 
       message: error.message 
