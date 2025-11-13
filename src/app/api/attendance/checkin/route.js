@@ -1,12 +1,116 @@
-// /app/api/attendance/checkin/route.js
+// // app/api/attendance/checkout/route.js
+// import { NextResponse } from "next/server";
+// import connectDB from "@/lib/mongodb";
+// import Attendance from "@/Models/Attendance";
+// import Shift from "@/Models/Shift";
+// import { verifyToken, getUserIdFromToken } from "@/lib/jwt";
+// import Agent from "@/Models/Agent";
+
+// // Helper to parse "HH:MM" into Date object on a given date
+// function parseShiftDateTime(baseDate, timeStr) {
+//   const [hh, mm] = timeStr.split(":").map(Number);
+//   const dt = new Date(baseDate);
+//   dt.setHours(hh, mm, 0, 0);
+//   return dt;
+// }
+
+// // app/api/attendance/checkin/route.js
+// export async function POST(request) {
+//   try {
+//     await connectDB();
+
+//     // Authentication
+//     const authHeader = request.headers.get('authorization');
+//     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//       return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
+//     }
+    
+//     const token = authHeader.replace('Bearer ', '');
+//     const decoded = verifyToken(token);
+    
+//     if (!decoded) {
+//       return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
+//     }
+
+//     const body = await request.json();
+//     const { shiftId, location, userType = 'agent' } = body;
+
+//     const userId = getUserIdFromToken(decoded);
+
+//     // ✅ FIXED: Today's date range properly
+//     const now = new Date();
+//     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+//     const todayEnd = new Date(todayStart);
+//     todayEnd.setDate(todayEnd.getDate() + 1);
+
+//     // ✅ FIXED: Check if already checked in today - PROPER QUERY
+//     const existingAttendance = await Attendance.findOne({
+//       $or: [
+//         { agent: userId },
+//         { user: userId }
+//       ],
+//       checkInTime: { 
+//         $gte: todayStart, 
+//         $lt: todayEnd 
+//       }
+//     });
+
+//     if (existingAttendance) {
+//       return NextResponse.json({ 
+//         success: false, 
+//         message: "Already checked in for today." 
+//       }, { status: 400 });
+//     }
+
+//     // Create new attendance
+//     const attendanceData = {
+//       shift: shiftId,
+//       checkInTime: now,
+//       checkInLocation: location || null,
+//       status: 'present'
+//     };
+
+//     // ✅ FIXED: Assign to correct field based on userType
+//     if (userType === 'agent') {
+//       attendanceData.agent = userId;
+//     } else {
+//       attendanceData.user = userId;
+//     }
+
+//     const attendance = new Attendance(attendanceData);
+//     await attendance.save();
+
+//     // Populate and return
+//     const populated = await Attendance.findById(attendance._id)
+//       .populate("user", "firstName lastName email")
+//       .populate("agent", "agentName agentId email")
+//       .populate("shift", "name startTime endTime hours days")
+//       // .populate("manager", "firstName lastName email");
+
+//     return NextResponse.json({ 
+//       success: true, 
+//       message: "Checked in successfully!", 
+//       data: populated 
+//     });
+
+//   } catch (error) {
+//     console.error("POST /api/attendance/checkin error:", error);
+//     return NextResponse.json({ 
+//       success: false, 
+//       message: error.message 
+//     }, { status: 500 });
+//   }
+// }
+
+
+// app/api/attendance/checkin/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Attendance from "@/Models/Attendance";
 import Shift from "@/Models/Shift";
-import { verifyToken } from "@/lib/jwt";
+import { verifyToken, getUserIdFromToken } from "@/lib/jwt";
 
 function parseShiftDateTime(baseDate, timeStr) {
-  // baseDate: Date (midnight of the day), timeStr: "HH:MM"
   const [hh, mm] = timeStr.split(":").map(Number);
   const dt = new Date(baseDate);
   dt.setHours(hh, mm, 0, 0);
@@ -17,91 +121,138 @@ export async function POST(request) {
   try {
     await connectDB();
 
-    const token = request.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
-
+    // Authentication
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
     const decoded = verifyToken(token);
-    if (!decoded) return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
+    
+    if (!decoded) {
+      return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
+    }
 
     const body = await request.json();
-    const { shiftId, location } = body;
-    if (!shiftId) return NextResponse.json({ success: false, message: "shiftId required" }, { status: 400 });
+    const { shiftId, location, userType = 'agent' } = body;
 
-    const shift = await Shift.findById(shiftId).populate("manager", "firstName lastName email");
-    if (!shift) return NextResponse.json({ success: false, message: "Shift not found" }, { status: 404 });
+    const userId = getUserIdFromToken(decoded);
 
+    // ✅ FIXED: Today's date range properly
     const now = new Date();
-    const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
-    const shiftStart = parseShiftDateTime(todayStart, shift.startTime);
-    let shiftEnd = parseShiftDateTime(todayStart, shift.endTime);
-    if (shiftEnd <= shiftStart) shiftEnd.setDate(shiftEnd.getDate() + 1); // overnight
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
 
-    // allowed checkin window: from shiftStart -15min up to shiftEnd
-    const earliestCheckin = new Date(shiftStart.getTime() - 15 * 60 * 1000);
-    const latestCheckin = new Date(shiftEnd.getTime());
-
-    if (now < earliestCheckin) {
-      return NextResponse.json({
-        success: false,
-        message: `Check-in allowed from ${earliestCheckin.toLocaleTimeString()}`,
-      }, { status: 400 });
-    }
-    if (now > latestCheckin) {
-      return NextResponse.json({
-        success: false,
-        message: "Check-in window passed for this shift today.",
-      }, { status: 400 });
-    }
-
-    // prevent duplicate: same user+shift for today
-    const existing = await Attendance.findOne({
-      user: decoded.userId,
-      shift: shift._id,
-      checkInTime: { $gte: todayStart, $lt: new Date(todayStart.getTime() + 24*60*60*1000) },
+    console.log('🔍 Check-in Request:', {
+      userId,
+      shiftId,
+      now: now.toLocaleString(),
+      todayStart: todayStart.toLocaleString(),
+      todayEnd: todayEnd.toLocaleString()
     });
 
-    if (existing && existing.checkInTime) {
-      return NextResponse.json({ success: false, message: "Already checked-in today." }, { status: 400 });
+    // ✅ FIXED: Check if already checked in today - PROPER QUERY
+    const existingAttendance = await Attendance.findOne({
+      $or: [
+        { agent: userId },
+        { user: userId }
+      ],
+      checkInTime: { 
+        $gte: todayStart, 
+        $lt: todayEnd 
+      }
+    });
+
+    if (existingAttendance) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Already checked in for today." 
+      }, { status: 400 });
     }
 
-    // late logic
-    let isLate = false, lateMinutes = 0;
-    if (now > shiftStart) {
+    // Get shift details for timing calculation
+    const shift = await Shift.findById(shiftId);
+    if (!shift) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Shift not found" 
+      }, { status: 404 });
+    }
+
+    // ✅ FIXED: PROPER LATE CALCULATION
+    let isLate = false;
+    let lateMinutes = 0;
+    
+    const shiftStartTime = parseShiftDateTime(todayStart, shift.startTime);
+    
+    console.log('🕒 Timing Comparison:', {
+      now: now.toLocaleString(),
+      shiftStart: shiftStartTime.toLocaleString(),
+      shiftStartTime: shift.startTime
+    });
+
+    // Check if current time is after shift start time
+    if (now > shiftStartTime) {
       isLate = true;
-      lateMinutes = Math.ceil((now - shiftStart) / (60 * 1000));
-    }
-
-    let attendance;
-    if (existing) {
-      existing.checkInTime = now;
-      existing.checkInLocation = location || null;
-      existing.manager = shift.manager?._id || null;
-      existing.status = "present";
-      existing.isLate = isLate;
-      existing.lateMinutes = lateMinutes;
-      await existing.save();
-      attendance = existing;
-    } else {
-      attendance = await Attendance.create({
-        user: decoded.userId,
-        shift: shift._id,
-        manager: shift.manager?._id || null,
-        checkInTime: now,
-        checkInLocation: location || null,
-        status: "present",
+      lateMinutes = Math.floor((now - shiftStartTime) / (1000 * 60)); // Convert to minutes
+      console.log('⏰ Late Calculation:', {
         isLate,
         lateMinutes,
+        timeDifference: now - shiftStartTime
       });
     }
 
+    // Create new attendance
+    const attendanceData = {
+      shift: shiftId,
+      checkInTime: now,
+      checkInLocation: location || null,
+      status: 'present',
+      isLate: isLate,
+      lateMinutes: lateMinutes
+    };
+
+    // ✅ FIXED: Assign to correct field based on userType
+    if (userType === 'agent') {
+      attendanceData.agent = userId;
+    } else {
+      attendanceData.user = userId;
+    }
+
+    const attendance = new Attendance(attendanceData);
+    await attendance.save();
+
+    // Populate and return
     const populated = await Attendance.findById(attendance._id)
       .populate("user", "firstName lastName email")
-      .populate("shift", "name startTime endTime hours days")
-      .populate("manager", "firstName lastName email");
+      .populate("agent", "agentName agentId email")
+      .populate("shift", "name startTime endTime hours days");
 
-    return NextResponse.json({ success: true, message: "Checked-in", data: populated }, { status: 201 });
+    console.log('✅ Check-in Successful:', {
+      attendanceId: populated._id,
+      checkInTime: populated.checkInTime,
+      isLate: populated.isLate,
+      lateMinutes: populated.lateMinutes
+    });
+
+    let successMessage = "Checked in successfully!";
+    if (isLate) {
+      successMessage = `Checked in successfully! (Late by ${lateMinutes} minutes)`;
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: successMessage, 
+      data: populated 
+    });
+
   } catch (error) {
     console.error("POST /api/attendance/checkin error:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      message: error.message 
+    }, { status: 500 });
   }
 }
