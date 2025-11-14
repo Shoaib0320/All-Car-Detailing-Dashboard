@@ -345,7 +345,7 @@ const CreateBookingDialog = ({ open, onClose, onSubmit }) => {
     }
 
     // ✅ Generate Booking ID
-    const bookingId = `BK${Date.now()}${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
+    const bookingId = `GC${Date.now()}`;
 
     const bookingData = {
       bookingId,
