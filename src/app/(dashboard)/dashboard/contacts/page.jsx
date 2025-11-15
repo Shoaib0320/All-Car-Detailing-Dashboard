@@ -17,7 +17,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Phone,
   MessageSquare,
@@ -27,12 +35,21 @@ import {
   CheckCircle,
   Loader,
   Eye,
+  User,
+  Mail,
+  Phone as PhoneIcon,
 } from "lucide-react";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReplyMode, setIsReplyMode] = useState(false);
+  const [replySubject, setReplySubject] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isSendingReply, setIsSendingReply] = useState(false);
 
   const fadeUp = {
     hidden: { opacity: 0, y: 20 },
@@ -63,6 +80,53 @@ export default function ContactsPage() {
 
   // 🔍 Search handler
   const handleSearch = (query) => setSearch(query);
+
+  // 📧 Reply handler
+  const handleReply = async () => {
+    if (!replySubject.trim() || !replyMessage.trim()) {
+      alert("Please fill in both subject and message fields.");
+      return;
+    }
+
+    setIsSendingReply(true);
+    try {
+      // Simulate sending reply (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Update contact status to "In Progress" or "Resolved"
+      setContacts(prevContacts =>
+        prevContacts.map(contact =>
+          contact._id === selectedContact._id
+            ? { ...contact, status: "In Progress" }
+            : contact
+        )
+      );
+
+      // Reset form and close reply mode
+      setReplySubject("");
+      setReplyMessage("");
+      setIsReplyMode(false);
+
+      alert("Reply sent successfully!");
+    } catch (error) {
+      console.error("Error sending reply:", error);
+      alert("Failed to send reply. Please try again.");
+    } finally {
+      setIsSendingReply(false);
+    }
+  };
+
+  // Reset reply form when modal opens/closes
+  useEffect(() => {
+    if (isModalOpen && selectedContact) {
+      setReplySubject(`Re: Contact from ${selectedContact.name}`);
+      setReplyMessage(`Dear ${selectedContact.name},\n\nThank you for your message. We have received your inquiry and will respond shortly.\n\nBest regards,\nYour Support Team`);
+    } else {
+      setIsReplyMode(false);
+      setReplySubject("");
+      setReplyMessage("");
+    }
+  }, [isModalOpen, selectedContact]);
 
   // 🔎 Filter contacts
   const filteredContacts = contacts.filter(
@@ -224,7 +288,14 @@ export default function ContactsPage() {
                           : contact.message
                         : "No message"}
                     </p>
-                    <Button variant="ghost" size="sm">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedContact(contact);
+                        setIsModalOpen(true);
+                      }}
+                    >
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>
@@ -296,7 +367,14 @@ export default function ContactsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedContact(contact);
+                              setIsModalOpen(true);
+                            }}
+                          >
                             View
                           </Button>
                         </td>
@@ -309,6 +387,160 @@ export default function ContactsPage() {
           </motion.div>
         </>
       )}
+
+      {/* View Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-blue-600" />
+              Contact Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete information about this contact inquiry.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedContact && (
+            <div className="space-y-6">
+              <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-100">
+                      <User className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Name</p>
+                        <p className="text-sm font-semibold text-gray-900">{selectedContact.name}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-green-100">
+                      <Mail className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-green-600 uppercase tracking-wide">Email</p>
+                        <p className="text-sm font-semibold text-gray-900">{selectedContact.email}</p>
+                      </div>
+                    </div>
+
+                    {selectedContact.phone && (
+                      <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-100">
+                        <PhoneIcon className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">Phone</p>
+                          <p className="text-sm font-semibold text-gray-900">{selectedContact.phone}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-100">
+                      <MessageSquare className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">Message</p>
+                        <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">{selectedContact.message}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                      <CheckCircle className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</p>
+                        <span
+                          className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ${
+                            selectedContact.status === "New"
+                              ? "bg-blue-100 text-blue-800"
+                              : selectedContact.status === "In Progress"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {selectedContact.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Reply Section */}
+              {!isReplyMode ? (
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => setIsReplyMode(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Reply to Contact
+                  </Button>
+                </div>
+              ) : (
+                <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50/50 to-emerald-50/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700">
+                      <Mail className="h-5 w-5" />
+                      Reply to {selectedContact.name}
+                    </CardTitle>
+                    <CardDescription>
+                      Send a response to this contact inquiry.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Subject
+                      </label>
+                      <Input
+                        value={replySubject}
+                        onChange={(e) => setReplySubject(e.target.value)}
+                        placeholder="Enter subject line"
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">
+                        Message
+                      </label>
+                      <Textarea
+                        value={replyMessage}
+                        onChange={(e) => setReplyMessage(e.target.value)}
+                        placeholder="Type your reply message here..."
+                        rows={6}
+                        className="w-full resize-none"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsReplyMode(false)}
+                        disabled={isSendingReply}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleReply}
+                        disabled={isSendingReply || !replySubject.trim() || !replyMessage.trim()}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {isSendingReply ? (
+                          <>
+                            <Loader className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="h-4 w-4 mr-2" />
+                            Send Reply
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
