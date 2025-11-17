@@ -1,243 +1,279 @@
+// // // /app/api/attendance/my/route.js
+// // import { NextResponse } from "next/server";
+// // import connectDB from "@/lib/mongodb";
+// // import Attendance from "@/Models/Attendance";
+// // import { verifyToken } from "@/lib/jwt";
+
+// // export async function GET(request) {
+// //   try {
+// //     await connectDB();
+// //     const token = request.cookies.get("token")?.value;
+// //     if (!token) return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
+// //     const decoded = verifyToken(token);
+// //     if (!decoded) return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
+
+// //     const { searchParams } = new URL(request.url);
+// //     const month = parseInt(searchParams.get("month") || "", 10);
+// //     const year = parseInt(searchParams.get("year") || "", 10);
+
+// //     const userId = decoded.userId;
+
+// //     if (month && year) {
+// //       const from = new Date(year, month - 1, 1, 0, 0, 0, 0);
+// //       const to = new Date(year, month - 1 + 1, 1, 0, 0, 0, 0);
+
+// //       const attends = await Attendance.find({
+// //         user: userId,
+// //         createdAt: { $gte: from, $lt: to },
+// //       }).populate("shift", "name startTime endTime");
+
+// //       const present = attends.filter(a => a.checkInTime).length;
+// //       const presentWithCheckout = attends.filter(a => a.checkInTime && a.checkOutTime).length;
+// //       const overtimeMinutes = attends.reduce((s, a) => s + (a.overtimeMinutes || 0), 0);
+// //       const leaves = attends.filter(a => a.status === "leave").length;
+// //       const daysInMonth = Math.floor((to - from) / (24*60*60*1000));
+// //       const absent = Math.max(0, daysInMonth - present - leaves);
+
+// //       return NextResponse.json({
+// //         success: true,
+// //         data: {
+// //           month,
+// //           year,
+// //           totalDays: daysInMonth,
+// //           present,
+// //           presentWithCheckout,
+// //           absent,
+// //           leaves,
+// //           overtimeMinutes,
+// //           records: attends,
+// //         },
+// //       });
+// //     }
+
+// //     // otherwise recent records
+// //     const limit = parseInt(searchParams.get("limit") || "20", 10);
+// //     const records = await Attendance.find({ user: userId })
+// //       .populate("shift", "name startTime endTime")
+// //       .populate("manager", "firstName lastName email")
+// //       .sort({ createdAt: -1 })
+// //       .limit(limit);
+
+// //     return NextResponse.json({ success: true, data: records });
+// //   } catch (error) {
+// //     console.error("GET /api/attendance/my error:", error);
+// //     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+// //   }
+// // }
+
+
+
+
+// // app/api/attendance/my/route.js
+// import { NextResponse } from "next/server";
+// import connectDB from "@/lib/mongodb";
+// import Attendance from "@/Models/Attendance";
+// import { verifyToken, getUserIdFromToken } from "@/lib/jwt";
+
+// export async function GET(request) {
+//   try {
+//     await connectDB();
+    
+//     // ✅ FIXED: Get token from headers
+//     const authHeader = request.headers.get('authorization');
+//     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//       return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
+//     }
+    
+//     const token = authHeader.replace('Bearer ', '');
+//     const decoded = verifyToken(token);
+    
+//     if (!decoded) {
+//       return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
+//     }
+
+//     // ✅ FIXED: Use getUserIdFromToken
+//     const userId = getUserIdFromToken(decoded);
+
+//     const { searchParams } = new URL(request.url);
+//     const month = parseInt(searchParams.get("month") || "", 10);
+//     const year = parseInt(searchParams.get("year") || "", 10);
+
+//     // ✅ FIXED: Check if user is agent or regular user
+//     const isAgent = decoded.type === 'agent';
+//     const queryField = isAgent ? 'agent' : 'user';
+
+//     if (month && year) {
+//       const from = new Date(year, month - 1, 1, 0, 0, 0, 0);
+//       const to = new Date(year, month, 1, 0, 0, 0, 0);
+
+//       const attends = await Attendance.find({
+//         [queryField]: userId, // ✅ Dynamic field based on user type
+//         createdAt: { $gte: from, $lt: to },
+//       }).populate("shift", "name startTime endTime");
+
+//       const present = attends.filter(a => a.checkInTime).length;
+//       const presentWithCheckout = attends.filter(a => a.checkInTime && a.checkOutTime).length;
+//       const overtimeMinutes = attends.reduce((s, a) => s + (a.overtimeMinutes || 0), 0);
+//       const leaves = attends.filter(a => a.status === "leave").length;
+//       const daysInMonth = Math.floor((to - from) / (24 * 60 * 60 * 1000));
+//       const absent = Math.max(0, daysInMonth - present - leaves);
+
+//       return NextResponse.json({
+//         success: true,
+//         data: {
+//           month,
+//           year,
+//           totalDays: daysInMonth,
+//           present,
+//           presentWithCheckout,
+//           absent,
+//           leaves,
+//           overtimeMinutes,
+//           records: attends,
+//         },
+//       });
+//     }
+
+//     // Otherwise recent records
+//     const limit = parseInt(searchParams.get("limit") || "20", 10);
+//     const records = await Attendance.find({ [queryField]: userId })
+//       .populate("shift", "name startTime endTime")
+//       // .populate("manager", "firstName lastName email")
+//       .sort({ createdAt: -1 })
+//       .limit(limit);
+
+//     return NextResponse.json({ 
+//       success: true, 
+//       data: records 
+//     });
+
+//   } catch (error) {
+//     console.error("GET /api/attendance/my error:", error);
+//     return NextResponse.json({ 
+//       success: false, 
+//       message: error.message 
+//     }, { status: 500 });
+//   }
+// }
+
+
+
 // app/api/attendance/my/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Attendance from "@/Models/Attendance";
 import { verifyToken, getUserIdFromToken } from "@/lib/jwt";
-import Holiday from "@/Models/Holiday";
-import WeeklyOff from "@/Models/WeeklyOff";
-import Shift from "@/Models/Shift";
-import Agent from "@/Models/Agent";
-import User from "@/Models/User";
-
-/** ---------- Pakistan Time Utilities ---------- **/
-
-// Convert to Pakistan Time (Asia/Karachi)
-function toPakistanDate(date) {
-  return new Date(
-    new Date(date).toLocaleString("en-US", { timeZone: "Asia/Karachi" })
-  );
-}
-
-// Stable Key in Pakistan Time (YYYY-MM-DD)
-function toKeyPKT(date) {
-  const d = toPakistanDate(date);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-// Get all month dates up to today (Pakistan)
-function getDatesUpToTodayPKT(year, month) {
-  const dates = [];
-  const today = toPakistanDate(new Date());
-  const lastDay =
-    today.getFullYear() === year && today.getMonth() + 1 === month
-      ? today.getDate()
-      : new Date(year, month, 0).getDate();
-  for (let d = 1; d <= lastDay; d++) {
-    dates.push(new Date(year, month - 1, d));
-  }
-  return dates;
-}
-
-/** ---------- Main API ---------- **/
 
 export async function GET(request) {
   try {
     await connectDB();
-    console.log("📅 Attendance Monthly Route Triggered (Pakistan Time)");
-
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    
+    // Get token from headers
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ success: false, message: "Not authenticated" }, { status: 401 });
     }
-
-    const token = authHeader.split(" ")[1];
+    
+    const token = authHeader.replace('Bearer ', '');
     const decoded = verifyToken(token);
+    
     if (!decoded) {
       return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
     }
 
     const userId = getUserIdFromToken(decoded);
-    const userType = decoded.type || "agent";
 
     const { searchParams } = new URL(request.url);
-    const month = parseInt(searchParams.get("month"));
-    const year = parseInt(searchParams.get("year"));
-    if (!month || !year) {
-      return NextResponse.json({ success: false, message: "Month and Year are required" }, { status: 400 });
-    }
+    const month = parseInt(searchParams.get("month") || "", 10);
+    const year = parseInt(searchParams.get("year") || "", 10);
+    const limit = parseInt(searchParams.get("limit") || "50", 10);
 
-    const queryField = userType === "agent" ? "agent" : "user";
+    // ✅ FIXED: Check if user is agent or regular user
+    const isAgent = decoded.type === 'agent';
+    const queryField = isAgent ? 'agent' : 'user';
 
-    // Range
-    const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
-    const monthEnd = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
-
-    // Attendance records for the month
-    const attends = await Attendance.find({
-      [queryField]: userId,
-      $or: [
-        { date: { $gte: monthStart, $lt: monthEnd } },
-        { checkInTime: { $gte: monthStart, $lt: monthEnd } },
-      ],
-    })
-      .populate("shift", "name startTime endTime hours days")
-      .sort({ date: 1, checkInTime: 1 });
-
-    const attendanceMap = {};
-    attends.forEach(att => {
-      const source = att.date || att.checkInTime || att.createdAt;
-      if (!source) return;
-      const key = toKeyPKT(source);
-      attendanceMap[key] = att;
+    console.log('🔍 Attendance Query:', {
+      userId,
+      queryField,
+      month,
+      year,
+      limit
     });
 
-    const todayPK = toPakistanDate(new Date());
-    const todayKey = toKeyPKT(todayPK);
+    let query = { [queryField]: userId };
 
-    const datesUpToToday = getDatesUpToTodayPKT(year, month);
+    // If month and year provided, get monthly data
+    if (month && year) {
+      const from = new Date(year, month - 1, 1, 0, 0, 0, 0);
+      const to = new Date(year, month, 1, 0, 0, 0, 0);
 
-    // Also include future approved leave etc.
-    const futureKeys = new Set();
-    attends.forEach(att => {
-      const key = toKeyPKT(att.date || att.checkInTime || att.createdAt);
-      if (key > todayKey) futureKeys.add(key);
-    });
+      // ✅ FIXED: Use checkInTime instead of createdAt
+      query.checkInTime = { $gte: from, $lt: to };
 
-    // Combine dates up to today + future records
-    const mergedKeysSet = new Set(datesUpToToday.map(d => toKeyPKT(d)));
-    for (const fk of futureKeys) mergedKeysSet.add(fk);
-    const mergedKeys = Array.from(mergedKeysSet).sort();
+      const attends = await Attendance.find(query)
+        .populate("shift", "name startTime endTime")
+        .sort({ checkInTime: -1 });
 
-    // Weekly Offs & Holidays (month-wide)
-    const weeklyOffDocs = await WeeklyOff.find({ isActive: true });
-    const weeklyOffSet = new Set(weeklyOffDocs.map(w => w.day.toLowerCase()));
+      // Calculate statistics
+      const presentDays = attends.filter(a => a.checkInTime).length;
+      const completedDays = attends.filter(a => a.checkInTime && a.checkOutTime).length;
+      const lateDays = attends.filter(a => a.isLate).length;
+      const overtimeDays = attends.filter(a => a.isOvertime).length;
+      
+      const totalLateMinutes = attends.reduce((sum, a) => sum + (a.lateMinutes || 0), 0);
+      const totalOvertimeMinutes = attends.reduce((sum, a) => sum + (a.overtimeMinutes || 0), 0);
 
-    const monthStartPK = toPakistanDate(new Date(Date.UTC(year, month - 1, 1)));
-    const monthEndPK = toPakistanDate(new Date(Date.UTC(year, month, 0)));
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const absentDays = Math.max(0, daysInMonth - presentDays);
 
-    const holidayDocs = await Holiday.find({
-      $or: [
-        { date: { $gte: monthStart, $lt: monthEnd } },
-        { isRecurring: true }
-      ],
-      isActive: true
-    });
-
-    const holidaysSet = new Set();
-    for (const h of holidayDocs) {
-      const dateKey = toKeyPKT(h.date);
-      holidaysSet.add(dateKey);
-    }
-
-    /** ---------------- Build Final Data ---------------- **/
-
-    const tableData = [];
-    let stats = { present: 0, late: 0, absent: 0, holiday: 0, weeklyOff: 0, leave: 0 };
-
-    const totalLateMinutes = attends.reduce((sum, a) => sum + (a.lateMinutes || 0), 0);
-    const totalOvertimeMinutes = attends.reduce((sum, a) => sum + (a.overtimeMinutes || 0), 0);
-
-    for (const key of mergedKeys) {
-      const dateObj = new Date(`${key}T00:00:00`);
-      const isFuture = key > todayKey;
-      const record = attendanceMap[key];
-      let status = "absent";
-      let remarks = "";
-      let checkInTime = null;
-      let checkOutTime = null;
-      let lateMinutes = 0;
-      let overtimeMinutes = 0;
-
-      if (record) {
-        status = record.status || "present";
-        checkInTime = record.checkInTime
-          ? toPakistanDate(record.checkInTime).toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })
-          : null;
-        checkOutTime = record.checkOutTime
-          ? toPakistanDate(record.checkOutTime).toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit", hour12: true })
-          : null;
-        lateMinutes = record.lateMinutes || 0;
-        overtimeMinutes = record.overtimeMinutes || 0;
-      } else {
-        // Future with no record → skip
-        if (isFuture) continue;
-
-        // Check if holiday or weekly off
-        if (holidaysSet.has(key)) {
-          status = "holiday";
-          remarks = "Holiday";
-        } else {
-          const weekday = toPakistanDate(dateObj)
-            .toLocaleDateString("en-US", { weekday: "long" })
-            .toLowerCase();
-          if (weeklyOffSet.has(weekday)) {
-            status = "weekly_off";
-            remarks = "Weekly Off";
-          } else {
-            status = "absent";
-            remarks = "No Attendance Record";
-          }
-        }
-      }
-
-      // Stats (up to today)
-      if (!isFuture) {
-        if (status === "present") stats.present++;
-        else if (status === "late") stats.late++;
-        else if (status === "absent") stats.absent++;
-        else if (status === "holiday") stats.holiday++;
-        else if (status === "weekly_off") stats.weeklyOff++;
-        else if (["approved_leave", "pending_leave", "leave"].includes(status)) stats.leave++;
-      }
-
-      tableData.push({
-        date: key,
-        day: toPakistanDate(dateObj).toLocaleDateString("en-PK", { weekday: "short" }),
-        status,
-        checkInTime,
-        checkOutTime,
-        remarks,
-        lateMinutes,
-        overtimeMinutes,
-        rawRecord: record || null,
+      return NextResponse.json({
+        success: true,
+        data: {
+          month,
+          year,
+          totalDays: daysInMonth,
+          present: presentDays,
+          completed: completedDays,
+          absent: absentDays,
+          late: lateDays,
+          overtime: overtimeDays,
+          totalLateMinutes,
+          totalOvertimeMinutes,
+          records: attends,
+        },
       });
     }
 
-    const workingDays = datesUpToToday.length - (stats.holiday + stats.weeklyOff);
-    const attendanceRate =
-      workingDays > 0
-        ? ((stats.present + stats.late) / workingDays * 100).toFixed(2)
-        : "0.00";
+    // Otherwise get recent records with proper sorting
+    const records = await Attendance.find(query)
+      .populate("shift", "name startTime endTime")
+      .sort({ checkInTime: -1 }) // Sort by check-in time descending
+      .limit(limit);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        month,
-        year,
-        timezone: "Asia/Karachi",
-        generatedAt: toPakistanDate(new Date()).toLocaleString("en-PK", { timeZone: "Asia/Karachi" }),
-        summary: {
-          present: stats.present,
-          late: stats.late,
-          absent: stats.absent,
-          holiday: stats.holiday,
-          weeklyOff: stats.weeklyOff,
-          leave: stats.leave,
-          totalLateMinutes,
-          totalOvertimeMinutes,
-          attendanceRate,
-        },
-        records: tableData,
-      },
+    console.log('📊 Found records:', records.length);
+    
+    // ✅ FIXED: Debug each record
+    if (records.length > 0) {
+      console.log('📅 Sample record dates:');
+      records.forEach((record, index) => {
+        console.log(`Record ${index + 1}:`, {
+          checkInTime: record.checkInTime,
+          checkOutTime: record.checkOutTime,
+          date: record.checkInTime ? new Date(record.checkInTime).toDateString() : 'No date'
+        });
+      });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      data: records 
     });
+
   } catch (error) {
-    console.error("❌ Attendance GET error:", error);
-    return NextResponse.json(
-      { success: false, message: "Server error", error: error.message },
-      { status: 500 }
-    );
+    console.error("GET /api/attendance/my error:", error);
+    return NextResponse.json({ 
+      success: false, 
+      message: error.message 
+    }, { status: 500 });
   }
 }

@@ -1,4 +1,3 @@
-//src/app/(dashboard)/dashboard/view-attendance/page.jsx
 "use client";
 import React, { useEffect, useState } from "react";
 import { adminService } from "@/services/adminService";
@@ -14,14 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Calendar, Users, CheckCircle, XCircle, Clock, Plus, Trash2, PlayCircle, ToggleLeft, ToggleRight, Edit, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, Calendar, Users, CheckCircle, XCircle, Clock, Plus, Trash2, PlayCircle, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
-import CustomModal from "@/components/ui/customModal";
-import Link from "next/link";
-import GlobalData from "@/components/common/GlobalData";
 
 export default function AdminAttendancePage() {
-  // State variables
   const [attendance, setAttendance] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [holidays, setHolidays] = useState([]);
@@ -29,7 +25,6 @@ export default function AdminAttendancePage() {
   const [users, setUsers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [shifts, setShifts] = useState([]);
-
   const [loading, setLoading] = useState({
     attendance: false,
     leave: false,
@@ -37,38 +32,22 @@ export default function AdminAttendancePage() {
     assign: false,
     holidays: false,
     weeklyOff: false,
-    auto: false,
-    edit: false,
-    shiftAuto: false
+    auto: false
   });
-
   const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState({
-    total: 0,
-    totalPages: 0,
-    page: 1,
-    limit: 10,
-    hasNextPage: false,
-    hasPrevPage: false
-  });
-
+  const [meta, setMeta] = useState({ total: 0, totalPages: 0 });
   const [filters, setFilters] = useState({
     userType: "all",
     status: "all",
     date: ""
   });
-
   const [activeTab, setActiveTab] = useState("attendance");
   const [showManualModal, setShowManualModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [showWeeklyOffModal, setShowWeeklyOffModal] = useState(false);
   const [showAutoModal, setShowAutoModal] = useState(false);
-  const [showShiftAutoModal, setShowShiftAutoModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingAttendance, setEditingAttendance] = useState(null);
-
-  // Form states
+  
   const [manualForm, setManualForm] = useState({
     userType: "user",
     userId: "",
@@ -80,7 +59,6 @@ export default function AdminAttendancePage() {
     checkOutTime: "",
     notes: ""
   });
-
   const [leaveForm, setLeaveForm] = useState({
     userType: "user",
     userId: "",
@@ -90,44 +68,26 @@ export default function AdminAttendancePage() {
     leaveType: "casual",
     reason: ""
   });
-
   const [holidayForm, setHolidayForm] = useState({
     name: "",
     date: new Date().toISOString().split('T')[0],
     description: "",
     isRecurring: false
   });
-
   const [weeklyOffForm, setWeeklyOffForm] = useState({
     day: "sunday",
     name: "Sunday",
     description: "Weekly off day"
   });
-
   const [autoForm, setAutoForm] = useState({
     date: new Date().toISOString().split('T')[0]
   });
 
-  const [shiftAutoForm, setShiftAutoForm] = useState({
-    date: new Date().toISOString().split('T')[0],
-    userType: "all"
-  });
-
-  const [editForm, setEditForm] = useState({
-    status: "present",
-    checkInTime: "",
-    checkOutTime: "",
-    notes: ""
-  });
-
   const LIMIT = 10;
 
-  // ✅ Fetch All Data on component mount and when filters/page change
+  // ✅ Fetch All Data
   useEffect(() => {
     fetchInitialData();
-  }, []);
-
-  useEffect(() => {
     fetchAttendance();
   }, [page, filters]);
 
@@ -141,92 +101,49 @@ export default function AdminAttendancePage() {
     }
   }, [activeTab]);
 
-  // ✅ Fetch initial data (users, agents, shifts)
   const fetchInitialData = async () => {
     try {
+      setLoading(prev => ({ ...prev, attendance: true }));
+      
+      // Fetch users and agents
       const usersResponse = await adminService.getUsersAndAgents("all");
       if (usersResponse.success) {
-        // ✅ Ensure data has proper IDs
-        const usersData = Array.isArray(usersResponse.data?.users)
-          ? usersResponse.data.users.map(user => ({
-            ...user,
-            id: user._id || user.id,
-            name: `${user.firstName || ''} ${user.lastName || ''}`.trim()
-          }))
-          : [];
-
-        const agentsData = Array.isArray(usersResponse.data?.agents)
-          ? usersResponse.data.agents.map(agent => ({
-            ...agent,
-            id: agent._id || agent.id,
-            name: agent.agentName || ''
-          }))
-          : [];
-
-        setUsers(usersData);
-        setAgents(agentsData);
-      } else {
-        setUsers([]);
-        setAgents([]);
+        setUsers(usersResponse.data.users || []);
+        setAgents(usersResponse.data.agents || []);
       }
 
+      // Fetch shifts
       const shiftsResponse = await shiftService.getShiftsForDropdown();
-      setShifts(Array.isArray(shiftsResponse) ? shiftsResponse : []);
+      setShifts(shiftsResponse);
 
     } catch (error) {
       console.error("Error fetching initial data:", error);
       toast.error("Error loading data");
-      setUsers([]);
-      setAgents([]);
-      setShifts([]);
+    } finally {
+      setLoading(prev => ({ ...prev, attendance: false }));
     }
   };
 
-  // ✅ Fetch Attendance Data with proper pagination
-  const fetchAttendance = async (pageNum = page) => {
+  // ✅ Fetch Attendance Data
+  const fetchAttendance = async (pageNum = 1) => {
     try {
       setLoading(prev => ({ ...prev, attendance: true }));
-
-      const response = await adminService.getAllAttendance({
-        page: pageNum,
+      
+      const response = await adminService.getAllAttendance({ 
+        page: pageNum, 
         limit: LIMIT,
-        ...filters
+        ...filters 
       });
-
+      
       if (response.success) {
-        setAttendance(Array.isArray(response.data) ? response.data : []);
-        setMeta(response.meta || {
-          total: 0,
-          totalPages: 0,
-          page: pageNum,
-          limit: LIMIT,
-          hasNextPage: false,
-          hasPrevPage: false
-        });
+        setAttendance(response.data || []);
+        setMeta(response.meta || { total: response.data?.length || 0, totalPages: 1 });
       } else {
         toast.error("Failed to load attendance");
-        setAttendance([]);
-        setMeta({
-          total: 0,
-          totalPages: 0,
-          page: pageNum,
-          limit: LIMIT,
-          hasNextPage: false,
-          hasPrevPage: false
-        });
       }
     } catch (err) {
-      console.error("Fetch attendance error:", err);
+      console.error(err);
       toast.error("Server error while fetching data");
-      setAttendance([]);
-      setMeta({
-        total: 0,
-        totalPages: 0,
-        page: pageNum,
-        limit: LIMIT,
-        hasNextPage: false,
-        hasPrevPage: false
-      });
     } finally {
       setLoading(prev => ({ ...prev, attendance: false }));
     }
@@ -238,14 +155,11 @@ export default function AdminAttendancePage() {
       setLoading(prev => ({ ...prev, leave: true }));
       const response = await attendanceService.getAllLeaveRequests("all");
       if (response.success) {
-        setLeaveRequests(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setLeaveRequests([]);
+        setLeaveRequests(response.data || []);
       }
     } catch (error) {
       console.error("Error fetching leave requests:", error);
       toast.error("Error loading leave requests");
-      setLeaveRequests([]);
     } finally {
       setLoading(prev => ({ ...prev, leave: false }));
     }
@@ -257,14 +171,11 @@ export default function AdminAttendancePage() {
       setLoading(prev => ({ ...prev, holidays: true }));
       const response = await attendanceService.getHolidays();
       if (response.success) {
-        setHolidays(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setHolidays([]);
+        setHolidays(response.data || []);
       }
     } catch (error) {
       console.error("Error fetching holidays:", error);
       toast.error("Error loading holidays");
-      setHolidays([]);
     } finally {
       setLoading(prev => ({ ...prev, holidays: false }));
     }
@@ -276,14 +187,11 @@ export default function AdminAttendancePage() {
       setLoading(prev => ({ ...prev, weeklyOff: true }));
       const response = await weeklyOffService.getAll();
       if (response.success) {
-        setWeeklyOffs(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setWeeklyOffs([]);
+        setWeeklyOffs(response.data || []);
       }
     } catch (error) {
       console.error("Error fetching weekly offs:", error);
       toast.error("Error loading weekly offs");
-      setWeeklyOffs([]);
     } finally {
       setLoading(prev => ({ ...prev, weeklyOff: false }));
     }
@@ -294,7 +202,8 @@ export default function AdminAttendancePage() {
     e.preventDefault();
     try {
       setLoading(prev => ({ ...prev, manual: true }));
-
+      
+      // Prepare data for API
       const submitData = {
         ...manualForm,
         shiftId: manualForm.shiftId || null
@@ -304,8 +213,18 @@ export default function AdminAttendancePage() {
       if (response.success) {
         toast.success("Attendance updated successfully");
         setShowManualModal(false);
-        resetManualForm();
-        fetchAttendance(1);
+        setManualForm({
+          userType: "user",
+          userId: "",
+          agentId: "",
+          shiftId: "",
+          date: new Date().toISOString().split('T')[0],
+          status: "present",
+          checkInTime: "",
+          checkOutTime: "",
+          notes: ""
+        });
+        fetchAttendance();
       } else {
         toast.error(response.message || "Error updating attendance");
       }
@@ -314,58 +233,6 @@ export default function AdminAttendancePage() {
       toast.error("Error updating attendance");
     } finally {
       setLoading(prev => ({ ...prev, manual: false }));
-    }
-  };
-
-  // ✅ Handle Edit Attendance
-  const handleEditAttendance = (attendanceRecord) => {
-    // Check if attendance can be edited
-    if (!canEditAttendance(attendanceRecord)) {
-      if (attendanceRecord.status === 'holiday' || attendanceRecord.status === 'weekly_off') {
-        toast.error("Cannot edit holiday or weekly off records");
-        return;
-      }
-      toast.error("Cannot edit this attendance record");
-      return;
-    }
-
-    setEditingAttendance(attendanceRecord);
-    setEditForm({
-      status: attendanceRecord.status,
-      checkInTime: attendanceRecord.checkInTime ? new Date(attendanceRecord.checkInTime).toTimeString().slice(0, 5) : "",
-      checkOutTime: attendanceRecord.checkOutTime ? new Date(attendanceRecord.checkOutTime).toTimeString().slice(0, 5) : "",
-      notes: attendanceRecord.notes || ""
-    });
-    setShowEditModal(true);
-  };
-
-  // ✅ Handle Update Attendance
-  const handleUpdateAttendance = async (e) => {
-    e.preventDefault();
-    if (!editingAttendance) return;
-
-    try {
-      setLoading(prev => ({ ...prev, edit: true }));
-
-      const updateData = {
-        attendanceId: editingAttendance._id,
-        ...editForm
-      };
-
-      const response = await adminService.updateAttendance(updateData);
-      if (response.success) {
-        toast.success("Attendance updated successfully");
-        setShowEditModal(false);
-        setEditingAttendance(null);
-        fetchAttendance(page);
-      } else {
-        toast.error(response.message || "Error updating attendance");
-      }
-    } catch (error) {
-      console.error("Error updating attendance:", error);
-      toast.error("Error updating attendance");
-    } finally {
-      setLoading(prev => ({ ...prev, edit: false }));
     }
   };
 
@@ -378,8 +245,16 @@ export default function AdminAttendancePage() {
       if (response.success) {
         toast.success("Leave assigned successfully");
         setShowLeaveModal(false);
-        resetLeaveForm();
-        fetchAttendance(1);
+        setLeaveForm({
+          userType: "user",
+          userId: "",
+          agentId: "",
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0],
+          leaveType: "casual",
+          reason: ""
+        });
+        fetchAttendance();
       } else {
         toast.error(response.message || "Error assigning leave");
       }
@@ -400,9 +275,14 @@ export default function AdminAttendancePage() {
       if (response.success) {
         toast.success("Holiday created successfully");
         setShowHolidayModal(false);
-        resetHolidayForm();
+        setHolidayForm({
+          name: "",
+          date: new Date().toISOString().split('T')[0],
+          description: "",
+          isRecurring: false
+        });
         fetchHolidays();
-        fetchAttendance(1);
+        fetchAttendance();
       } else {
         toast.error(response.message || "Error creating holiday");
       }
@@ -423,7 +303,11 @@ export default function AdminAttendancePage() {
       if (response.success) {
         toast.success("Weekly off day added successfully");
         setShowWeeklyOffModal(false);
-        resetWeeklyOffForm();
+        setWeeklyOffForm({
+          day: "sunday",
+          name: "Sunday",
+          description: "Weekly off day"
+        });
         fetchWeeklyOffs();
       } else {
         toast.error(response.message || "Error adding weekly off day");
@@ -455,7 +339,7 @@ export default function AdminAttendancePage() {
   // ✅ Handle Weekly Off Deletion
   const handleDeleteWeeklyOff = async (id) => {
     if (!confirm("Are you sure you want to delete this weekly off day?")) return;
-
+    
     try {
       const response = await weeklyOffService.delete(id);
       if (response.success) {
@@ -470,7 +354,7 @@ export default function AdminAttendancePage() {
     }
   };
 
-  // ✅ Handle Auto Attendance Processing (Original)
+  // ✅ Handle Auto Attendance Processing
   const handleAutoAttendance = async (e) => {
     e.preventDefault();
     try {
@@ -479,8 +363,10 @@ export default function AdminAttendancePage() {
       if (response.success) {
         toast.success(response.message || "Auto attendance processed successfully");
         setShowAutoModal(false);
-        resetAutoForm();
-        fetchAttendance(1);
+        setAutoForm({
+          date: new Date().toISOString().split('T')[0]
+        });
+        fetchAttendance();
       } else {
         toast.error(response.message || "Error processing auto attendance");
       }
@@ -492,38 +378,16 @@ export default function AdminAttendancePage() {
     }
   };
 
-  // ✅ Handle Shift-based Auto Attendance Processing (New)
-  const handleShiftAutoAttendance = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(prev => ({ ...prev, shiftAuto: true }));
-      const response = await adminService.processShiftAutoAttendance(shiftAutoForm.date, shiftAutoForm.userType);
-      if (response.success) {
-        toast.success(response.message || "Shift-based auto attendance processed successfully");
-        setShowShiftAutoModal(false);
-        resetShiftAutoForm();
-        fetchAttendance(1);
-      } else {
-        toast.error(response.message || "Error processing shift-based auto attendance");
-      }
-    } catch (error) {
-      console.error("Error processing shift-based auto attendance:", error);
-      toast.error("Error processing shift-based auto attendance");
-    } finally {
-      setLoading(prev => ({ ...prev, shiftAuto: false }));
-    }
-  };
-
   // ✅ Handle Holiday Deletion
   const handleDeleteHoliday = async (holidayId) => {
     if (!confirm("Are you sure you want to delete this holiday?")) return;
-
+    
     try {
       const response = await attendanceService.deleteHoliday(holidayId);
       if (response.success) {
         toast.success("Holiday deleted successfully");
         fetchHolidays();
-        fetchAttendance(1);
+        fetchAttendance();
       } else {
         toast.error(response.message || "Error deleting holiday");
       }
@@ -540,7 +404,7 @@ export default function AdminAttendancePage() {
       if (response.success) {
         toast.success(`Leave request ${status}`);
         fetchLeaveRequests();
-        fetchAttendance(page);
+        fetchAttendance();
       } else {
         toast.error(response.message || "Error processing request");
       }
@@ -550,104 +414,19 @@ export default function AdminAttendancePage() {
     }
   };
 
-  // ✅ Check if attendance can be edited
-  const canEditAttendance = (attendanceRecord) => {
-    if (!attendanceRecord) return false;
-
-    // Cannot edit holiday or weekly off records
-    if (attendanceRecord.status === 'holiday' || attendanceRecord.status === 'weekly_off') {
-      return false;
-    }
-
-    const recordDate = new Date(attendanceRecord.createdAt);
-    const today = new Date();
-
-    // Can only edit today's or past records
-    return recordDate <= today;
-  };
-
-  // ✅ Reset Form Functions
-  const resetManualForm = () => {
-    setManualForm({
-      userType: "user",
-      userId: "",
-      agentId: "",
-      shiftId: "",
-      date: new Date().toISOString().split('T')[0],
-      status: "present",
-      checkInTime: "",
-      checkOutTime: "",
-      notes: ""
-    });
-  };
-
-  const resetLeaveForm = () => {
-    setLeaveForm({
-      userType: "user",
-      userId: "",
-      agentId: "",
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date().toISOString().split('T')[0],
-      leaveType: "casual",
-      reason: ""
-    });
-  };
-
-  const resetHolidayForm = () => {
-    setHolidayForm({
-      name: "",
-      date: new Date().toISOString().split('T')[0],
-      description: "",
-      isRecurring: false
-    });
-  };
-
-  const resetWeeklyOffForm = () => {
-    setWeeklyOffForm({
-      day: "sunday",
-      name: "Sunday",
-      description: "Weekly off day"
-    });
-  };
-
-  const resetAutoForm = () => {
-    setAutoForm({
-      date: new Date().toISOString().split('T')[0]
-    });
-  };
-
-  const resetShiftAutoForm = () => {
-    setShiftAutoForm({
-      date: new Date().toISOString().split('T')[0],
-      userType: "all"
-    });
-  };
-
-  // ✅ Filter and Pagination Handlers
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPage(1);
   };
 
   const goToNextPage = () => {
-    if (page < meta.totalPages) {
-      setPage(prev => prev + 1);
-    }
+    if (page < meta.totalPages) setPage((p) => p + 1);
   };
 
   const goToPrevPage = () => {
-    if (page > 1) {
-      setPage(prev => prev - 1);
-    }
+    if (page > 1) setPage((p) => p - 1);
   };
 
-  const goToPage = (pageNum) => {
-    if (pageNum >= 1 && pageNum <= meta.totalPages) {
-      setPage(pageNum);
-    }
-  };
-
-  // ✅ Utility Functions
   const getStatusBadge = (status) => {
     const statusConfig = {
       present: "bg-green-100 text-green-700 border-green-200",
@@ -661,8 +440,8 @@ export default function AdminAttendancePage() {
     };
 
     return (
-      <Badge variant="outline" className={statusConfig[status] || "bg-gray-100 text-gray-700 border-gray-200"}>
-        {status ? status.replace(/_/g, ' ') : 'Unknown'}
+      <Badge variant="outline" className={statusConfig[status]}>
+        {status.replace('_', ' ')}
       </Badge>
     );
   };
@@ -675,878 +454,103 @@ export default function AdminAttendancePage() {
     };
 
     return (
-      <Badge variant="outline" className={statusConfig[status] || "bg-gray-100 text-gray-700 border-gray-200"}>
-        {status || 'Unknown'}
+      <Badge variant="outline" className={statusConfig[status]}>
+        {status}
       </Badge>
     );
   };
 
-  // ✅ Safe ID function to handle missing IDs
-  const getSafeId = (item, index) => {
-    return item?._id || item?.id || `temp-${index}`;
-  };
-
-  // ✅ Safe name function
-  const getSafeName = (item) => {
-    if (item.firstName && item.lastName) {
-      return `${item.firstName} ${item.lastName}`;
-    }
-    return item.agentName || item.name || 'Unknown';
-  };
-
-  // ✅ Safe email function
-  const getSafeEmail = (item) => {
-    return item.email || 'No email';
-  };
-
-  // ✅ Render Pagination Component
-  const renderPagination = () => {
-    if (meta.totalPages <= 1) return null;
-
-    const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(meta.totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(
-        <Button
-          key={i}
-          variant={page === i ? "default" : "outline"}
-          size="sm"
-          onClick={() => goToPage(i)}
-          className={page === i ? "bg-gray-800 text-white" : ""}
-        >
-          {i}
-        </Button>
-      );
-    }
-
-    return (
-      <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
-        <Button
-          onClick={goToPrevPage}
-          disabled={page === 1}
-          variant="outline"
-          size="sm"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </Button>
-
-        {startPage > 1 && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToPage(1)}
-            >
-              1
-            </Button>
-            {startPage > 2 && <span className="px-2">...</span>}
-          </>
-        )}
-
-        {pages}
-
-        {endPage < meta.totalPages && (
-          <>
-            {endPage < meta.totalPages - 1 && <span className="px-2">...</span>}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => goToPage(meta.totalPages)}
-            >
-              {meta.totalPages}
-            </Button>
-          </>
-        )}
-
-        <Button
-          onClick={goToNextPage}
-          disabled={page === meta.totalPages}
-          variant="outline"
-          size="sm"
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-
-        <span className="text-sm text-muted-foreground ml-4">
-          Page {page} of {meta.totalPages} • {meta.total} total records
-        </span>
-      </div>
-    );
-  };
-
-  // Columns for GlobalData / attendance table
-  const attendanceColumns = [
-    {
-      label: "Type",
-      render: (a) => (
-        <Badge variant={a.user ? "default" : "secondary"}>
-          {a.user ? "User" : "Agent"}
-        </Badge>
-      ),
-    },
-    {
-      label: "Name",
-      render: (a) => (
-        <div>
-          <div className="font-medium">
-            {a.user
-              ? `${a.user?.firstName || ""} ${a.user?.lastName || ""}`
-              : a.agent?.agentName || "—"}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {a.user ? a.user.email : a.agent?.email}
-          </div>
-        </div>
-      ),
-    },
-    { label: "Shift", render: (a) => a.shift?.name || "—" },
-    {
-      label: "Check In",
-      render: (a) => (a.checkInTime ? new Date(a.checkInTime).toLocaleTimeString() : "—"),
-    },
-    {
-      label: "Check Out",
-      render: (a) => (a.checkOutTime ? new Date(a.checkOutTime).toLocaleTimeString() : "—"),
-    },
-    { label: "Status", render: (a) => getStatusBadge(a.status) },
-    {
-      label: "Remarks",
-      render: (a) => (
-        <div>
-          {a.isLate ? (
-            <span className="text-yellow-600 text-sm">Late ({a.lateMinutes}m)</span>
-          ) : a.isOvertime ? (
-            <span className="text-green-600 text-sm">Overtime (+{a.overtimeMinutes}m)</span>
-          ) : a.leaveReason ? (
-            <span className="text-blue-600 text-sm">{a.leaveType}: {a.leaveReason}</span>
-          ) : (
-            <span className="text-muted-foreground text-sm">—</span>
-          )}
-        </div>
-      ),
-    },
-    { label: "Date", render: (a) => new Date(a.date).toLocaleDateString() },
-    {
-      label: "Actions",
-      align: "right",
-      render: (a) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleEditAttendance(a)}
-          disabled={!canEditAttendance(a)}
-          title={
-            !canEditAttendance(a)
-              ? a.status === "holiday" || a.status === "weekly_off"
-                ? "Cannot edit holiday/weekly off records"
-                : "Cannot edit this record"
-              : "Edit attendance"
-          }
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-      ),
-    },
-  ];
-
-  // Columns for Holidays
-  const holidayColumns = [
-    { label: "Name", render: (h) => <div className="font-medium">{h.name}</div> },
-    { label: "Date", render: (h) => new Date(h.date).toLocaleDateString() },
-    { label: "Description", render: (h) => <div className="max-w-xs truncate" title={h.description}>{h.description || '—'}</div> },
-    { label: "Recurring", render: (h) => (<Badge variant={h.isRecurring ? 'default' : 'secondary'}>{h.isRecurring ? 'Yes' : 'No'}</Badge>) },
-    { label: "Actions", align: "right", render: (h) => (
-      <Button variant="destructive" size="sm" onClick={() => handleDeleteHoliday(h._id)}>
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    )},
-  ];
-
-  // Columns for Weekly Offs
-  const weeklyOffColumns = [
-    { label: "Day", render: (w) => <div className="font-medium capitalize">{w.day}</div> },
-    { label: "Name", render: (w) => w.name },
-    { label: "Description", render: (w) => <div className="max-w-xs truncate" title={w.description}>{w.description || '—'}</div> },
-    { label: "Status", render: (w) => (<Badge variant={w.isActive ? 'default' : 'secondary'}>{w.isActive ? 'Active' : 'Inactive'}</Badge>) },
-    { label: "Actions", align: "right", render: (w) => (
-      <div className="flex gap-2">
-        <Button
-          variant={w.isActive ? "outline" : "default"}
-          size="sm"
-          onClick={() => handleToggleWeeklyOff(w._id, !w.isActive)}
-        >
-          {w.isActive ? <ToggleLeft className="h-4 w-4 mr-1" /> : <ToggleRight className="h-4 w-4 mr-1" />}
-          {w.isActive ? "Deactivate" : "Activate"}
-        </Button>
-        <Button variant="destructive" size="sm" onClick={() => handleDeleteWeeklyOff(w._id)}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    )},
-  ];
-
-  // Columns for Leave Requests
-  const leaveColumns = [
-    { label: "Type", render: (r) => (<Badge variant={r.user ? 'default' : 'secondary'}>{r.user ? 'User' : 'Agent'}</Badge>) },
-    { label: "Name", render: (r) => (
-      <div>
-        <div className="font-medium">{r.user ? `${r.user?.firstName || ''} ${r.user?.lastName || ''}` : r.agent?.agentName || '—'}</div>
-        <div className="text-xs text-muted-foreground">{r.user ? r.user.email : r.agent?.email}</div>
-      </div>
-    )},
-    { label: "Leave Type", render: (r) => <span className="capitalize">{r.leaveType}</span> },
-    { label: "Period", render: (r) => `${new Date(r.startDate).toLocaleDateString()} - ${new Date(r.endDate).toLocaleDateString()}` },
-    { label: "Reason", render: (r) => <div className="max-w-xs truncate" title={r.reason}>{r.reason}</div> },
-    { label: "Status", render: (r) => getLeaveStatusBadge(r.status) },
-    { label: "Actions", align: "right", render: (r) => (
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => handleLeaveAction(r._id, 'approved')}>
-          Approve
-        </Button>
-        <Button size="sm" variant="destructive" onClick={() => handleLeaveAction(r._id, 'rejected')}>
-          Reject
-        </Button>
-      </div>
-    )},
-  ];
-
-  // Filter option maps for various sections
-  const attendanceFilterOptionsMap = {
-    userType: [
-      { label: "Users", value: "user" },
-      { label: "Agents", value: "agent" },
-    ],
-    status: [
-      { label: "Present", value: "present" },
-      { label: "Absent", value: "absent" },
-      { label: "Leave", value: "leave" },
-      { label: "Late", value: "late" },
-      { label: "Holiday", value: "holiday" },
-      { label: "Weekly Off", value: "weekly_off" },
-      { label: "Approved Leave", value: "approved_leave" },
-    ],
-  };
-
-  const holidayFilterOptionsMap = {
-    isRecurring: [
-      { label: "Yes", value: "true" },
-      { label: "No", value: "false" },
-    ],
-  };
-
-  const weeklyOffFilterOptionsMap = {
-    isActive: [
-      { label: "Active", value: "true" },
-      { label: "Inactive", value: "false" },
-    ],
-  };
-
-  const leaveFilterOptionsMap = {
-    userType: [
-      { label: "Users", value: "user" },
-      { label: "Agents", value: "agent" },
-    ],
-    status: [
-      { label: "Pending", value: "pending" },
-      { label: "Approved", value: "approved" },
-      { label: "Rejected", value: "rejected" },
-    ],
-  };
-
-  // ✅ MODALS COMPONENTS
-
-  // Manual Attendance Modal
+  // ✅ Manual Attendance Modal (Fixed)
   const ManualAttendanceModal = () => (
-    <CustomModal
-      isOpen={showManualModal}
-      onClose={() => setShowManualModal(false)}
-      title="Manual Attendance Entry"
-      description="Add or update attendance record manually"
-      size="md"
-      preventClose={loading.manual} // Loading state mein close na ho
-    >
-      <form onSubmit={handleManualAttendance} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="userType">User Type</Label>
-            <Select
-              value={manualForm.userType}
-              onValueChange={(value) => setManualForm({ ...manualForm, userType: value, userId: "", agentId: "" })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select user type" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* <SelectItem value="user">User</SelectItem> */}
-                <SelectItem value="agent">Agent</SelectItem>
-              </SelectContent>
-            </Select>
+    <Dialog open={showManualModal} onOpenChange={setShowManualModal}>
+      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Manual Attendance Entry</DialogTitle>
+          <DialogDescription>
+            Add or update attendance record manually
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleManualAttendance} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="userType">User Type</Label>
+              <Select 
+                value={manualForm.userType}
+                onValueChange={(value) => setManualForm({...manualForm, userType: value, userId: "", agentId: ""})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="agent">Agent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="person">
+                {manualForm.userType === 'user' ? 'Select User' : 'Select Agent'}
+              </Label>
+              <Select 
+                value={manualForm.userType === 'user' ? manualForm.userId : manualForm.agentId}
+                onValueChange={(value) => setManualForm({
+                  ...manualForm, 
+                  [manualForm.userType === 'user' ? 'userId' : 'agentId']: value
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${manualForm.userType === 'user' ? 'User' : 'Agent'}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="select">Select {manualForm.userType === 'user' ? 'User' : 'Agent'}</SelectItem>
+                  {(manualForm.userType === 'user' ? users : agents).map(person => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name} ({person.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* <div className="space-y-2">
-            <Label htmlFor="person">
-              {manualForm.userType === 'user' ? 'Select User' : 'Select Agent'}
-            </Label>
-            <Select
-              value={manualForm.userType === 'user' ? manualForm.userId : manualForm.agentId}
-              onValueChange={(value) => setManualForm({
-                ...manualForm,
-                [manualForm.userType === 'user' ? 'userId' : 'agentId']: value
-              })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={`Select ${manualForm.userType === 'user' ? 'User' : 'Agent'}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {(manualForm.userType === 'user' ? users : agents).map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name} ({person.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div> */}
-          <div className="space-y-2">
-            <Label htmlFor="person">
-              {manualForm.userType === 'user' ? 'Select User' : 'Select Agent'}
-            </Label>
-            <Select
-              value={manualForm.userType === 'user' ? manualForm.userId : manualForm.agentId}
-              onValueChange={(value) => setManualForm({
-                ...manualForm,
-                [manualForm.userType === 'user' ? 'userId' : 'agentId']: value
-              })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={`Select ${manualForm.userType === 'user' ? 'User' : 'Agent'}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {(manualForm.userType === 'user' ? users : agents).map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {manualForm.userType === 'user'
-                      ? `${person.name} (${person.email})`
-                      : `(${person.agentId})`
-                    }
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="shift">Shift (Optional)</Label>
+              <Select 
+                value={manualForm.shiftId}
+                onValueChange={(value) => setManualForm({...manualForm, shiftId: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Shift" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">No Shift</SelectItem>
+                  {shifts.map(shift => (
+                    <SelectItem key={shift._id} value={shift._id}>
+                      {shift.name} ({shift.startTime} - {shift.endTime})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="shift">Shift</Label>
-            <Select
-              value={manualForm.shiftId}
-              onValueChange={(value) => setManualForm({ ...manualForm, shiftId: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Shift" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no">No Shift</SelectItem>
-                {shifts.map(shift => (
-                  <SelectItem key={shift._id} value={shift._id}>
-                    {shift.name} ({shift.startTime} - {shift.endTime})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input 
+                type="date" 
+                value={manualForm.date}
+                onChange={(e) => setManualForm({...manualForm, date: e.target.value})}
+                required 
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              type="date"
-              value={manualForm.date}
-              onChange={(e) => setManualForm({ ...manualForm, date: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select
-            value={manualForm.status}
-            onValueChange={(value) => setManualForm({ ...manualForm, status: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="present">Present</SelectItem>
-              <SelectItem value="absent">Absent</SelectItem>
-              <SelectItem value="leave">Leave</SelectItem>
-              <SelectItem value="late">Late</SelectItem>
-              <SelectItem value="holiday">Holiday</SelectItem>
-              <SelectItem value="weekly_off">Weekly Off</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="checkInTime">Check In Time</Label>
-            <Input
-              type="time"
-              value={manualForm.checkInTime}
-              onChange={(e) => setManualForm({ ...manualForm, checkInTime: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="checkOutTime">Check Out Time</Label>
-            <Input
-              type="time"
-              value={manualForm.checkOutTime}
-              onChange={(e) => setManualForm({ ...manualForm, checkOutTime: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.manual}>
-            {loading.manual && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Attendance
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowManualModal(false)}
-            className="flex-1"
-            disabled={loading.manual}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
-  );
-
-  //✅ Leave Assignment Modal
-  const LeaveModal = () => (
-    <CustomModal
-      isOpen={showLeaveModal}
-      onClose={() => setShowLeaveModal(false)}
-      title="Assign Leave"
-      description="Assign leave to user or agent"
-      size="md"
-      preventClose={loading.assign}
-    >
-      <form onSubmit={handleAssignLeave} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2 w-full">
-            <Label htmlFor="userType">User Type</Label>
-            <Select
-              value={leaveForm.userType}
-              onValueChange={(value) => setLeaveForm({ ...leaveForm, userType: value, userId: "", agentId: "" })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select user type" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* <SelectItem value="user">User</SelectItem> */}
-                <SelectItem value="agent">Agent</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="person">
-              {leaveForm.userType === 'user' ? 'Select User' : 'Select Agent'}
-            </Label>
-            <Select
-              value={leaveForm.userType === 'user' ? leaveForm.userId : leaveForm.agentId}
-              onValueChange={(value) => setLeaveForm({
-                ...leaveForm,
-                [leaveForm.userType === 'user' ? 'userId' : 'agentId']: value
-              })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={`Select ${leaveForm.userType === 'user' ? 'User' : 'Agent'}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {(leaveForm.userType === 'user' ? users : agents).map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {leaveForm.userType === 'user'
-                      ? `${person.name} (${person.email})`
-                      : `(${person.agentId})`
-                    }
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="startDate">Start Date</Label>
-            <Input
-              type="date"
-              value={leaveForm.startDate}
-              onChange={(e) => setLeaveForm({ ...leaveForm, startDate: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="endDate">End Date</Label>
-            <Input
-              type="date"
-              value={leaveForm.endDate}
-              onChange={(e) => setLeaveForm({ ...leaveForm, endDate: e.target.value })}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="leaveType">Leave Type</Label>
-          <Select
-            value={leaveForm.leaveType}
-            onValueChange={(value) => setLeaveForm({ ...leaveForm, leaveType: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Leave Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sick">Sick Leave</SelectItem>
-              <SelectItem value="casual">Casual Leave</SelectItem>
-              <SelectItem value="emergency">Emergency Leave</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="reason">Reason</Label>
-          <Textarea
-            value={leaveForm.reason}
-            onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-            placeholder="Reason for leave..."
-            rows={3}
-            required
-          />
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.assign}>
-            {loading.assign && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Assign Leave
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowLeaveModal(false)}
-            className="flex-1"
-            disabled={loading.assign}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
-  );
-
-  // Holiday Creation Modal
-  const HolidayModal = () => (
-    <CustomModal
-      isOpen={showHolidayModal}
-      onClose={() => setShowHolidayModal(false)}
-      title="Create Holiday"
-      description="Add a new holiday to the system. Recurring holidays will automatically repeat every year."
-      size="lg"
-      preventClose={loading.holidays}
-    >
-      <form onSubmit={handleCreateHoliday} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Holiday Name *</Label>
-          <Input
-            type="text"
-            value={holidayForm.name}
-            onChange={(e) => setHolidayForm({ ...holidayForm, name: e.target.value })}
-            placeholder="Enter holiday name"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="date">Date *</Label>
-          <Input
-            type="date"
-            value={holidayForm.date}
-            onChange={(e) => setHolidayForm({ ...holidayForm, date: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            value={holidayForm.description}
-            onChange={(e) => setHolidayForm({ ...holidayForm, description: e.target.value })}
-            placeholder="Holiday description..."
-            rows={3}
-          />
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="isRecurring"
-            checked={holidayForm.isRecurring}
-            onChange={(e) => setHolidayForm({ ...holidayForm, isRecurring: e.target.checked })}
-            className="rounded border-gray-300"
-          />
-          <Label htmlFor="isRecurring" className="text-sm">
-            Recurring Holiday (will repeat every year)
-          </Label>
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.holidays}>
-            {loading.holidays && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Holiday
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowHolidayModal(false)}
-            className="flex-1"
-            disabled={loading.holidays}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
-  );
-
-  // Weekly Off Modal
-  const WeeklyOffModal = () => (
-    <CustomModal
-      isOpen={showWeeklyOffModal}
-      onClose={() => setShowWeeklyOffModal(false)}
-      title="Add Weekly Off Day"
-      description="Set a weekly off day that will automatically mark as off every week"
-      size="md"
-      preventClose={loading.weeklyOff}
-    >
-      <form onSubmit={handleCreateWeeklyOff} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="day">Day of Week</Label>
-          <Select
-            value={weeklyOffForm.day}
-            onValueChange={(value) => setWeeklyOffForm({
-              ...weeklyOffForm,
-              day: value,
-              name: value.charAt(0).toUpperCase() + value.slice(1)
-            })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select day" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sunday">Sunday</SelectItem>
-              <SelectItem value="monday">Monday</SelectItem>
-              <SelectItem value="tuesday">Tuesday</SelectItem>
-              <SelectItem value="wednesday">Wednesday</SelectItem>
-              <SelectItem value="thursday">Thursday</SelectItem>
-              <SelectItem value="friday">Friday</SelectItem>
-              <SelectItem value="saturday">Saturday</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="name">Display Name</Label>
-          <Input
-            type="text"
-            value={weeklyOffForm.name}
-            onChange={(e) => setWeeklyOffForm({ ...weeklyOffForm, name: e.target.value })}
-            placeholder="e.g., Sunday, Weekly Off"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            value={weeklyOffForm.description}
-            onChange={(e) => setWeeklyOffForm({ ...weeklyOffForm, description: e.target.value })}
-            placeholder="Description for this weekly off..."
-            rows={2}
-          />
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.weeklyOff}>
-            {loading.weeklyOff && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Add Weekly Off
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowWeeklyOffModal(false)}
-            className="flex-1"
-            disabled={loading.weeklyOff}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
-  );
-
-  // Original Auto Attendance Modal
-  const AutoAttendanceModal = () => (
-    <CustomModal
-      isOpen={showAutoModal}
-      onClose={() => setShowAutoModal(false)}
-      title="Process Auto Attendance"
-      description="Automatically mark absent for users/agents without attendance on the selected date."
-      size="md"
-      preventClose={loading.auto}
-    >
-      <form onSubmit={handleAutoAttendance} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="date">Date</Label>
-          <Input
-            type="date"
-            value={autoForm.date}
-            onChange={(e) => setAutoForm({ ...autoForm, date: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <h4 className="font-medium text-blue-800 mb-2">How Auto Attendance Works:</h4>
-          <ul className="text-sm text-blue-700 space-y-1">
-            <li>• Users/Agents without attendance will be marked as <strong>Absent</strong></li>
-            <li>• If date is a holiday, they will be marked as <strong>Holiday</strong></li>
-            <li>• If date is weekly off, they will be marked as <strong>Weekly Off</strong></li>
-            <li>• Existing attendance records will not be modified</li>
-          </ul>
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.auto}>
-            {loading.auto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Process Auto Attendance
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowAutoModal(false)}
-            className="flex-1"
-            disabled={loading.auto}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
-  );
-
-  // New Shift-based Auto Attendance Modal
-  const ShiftAutoAttendanceModal = () => (
-    <CustomModal
-      isOpen={showShiftAutoModal}
-      onClose={() => setShowShiftAutoModal(false)}
-      title="Process Shift-based Auto Attendance"
-      description="Mark absent for users/agents whose shifts have ended and no check-in recorded."
-      size="md"
-      preventClose={loading.shiftAuto}
-    >
-      <form onSubmit={handleShiftAutoAttendance} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              type="date"
-              value={shiftAutoForm.date}
-              onChange={(e) => setShiftAutoForm({ ...shiftAutoForm, date: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="userType">User Type</Label>
-            <Select
-              value={shiftAutoForm.userType}
-              onValueChange={(value) => setShiftAutoForm({ ...shiftAutoForm, userType: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All Users" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="user">Users Only</SelectItem>
-                <SelectItem value="agent">Agents Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-          <h4 className="font-medium text-green-800 mb-2">How Shift-based Auto Attendance Works:</h4>
-          <ul className="text-sm text-green-700 space-y-1">
-            <li>• Checks if user/agent has a shift assigned</li>
-            <li>• Verifies if shift end time has passed</li>
-            <li>• Marks as <strong>Absent</strong> only if shift ended and no check-in</li>
-            <li>• Respects holidays and weekly offs automatically</li>
-            <li>• Only processes selected user type</li>
-          </ul>
-        </div>
-
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.shiftAuto}>
-            {loading.shiftAuto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Process Shift Auto Attendance
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowShiftAutoModal(false)}
-            className="flex-1"
-            disabled={loading.shiftAuto}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
-  );
-
-  // Edit Attendance Modal
-  const EditAttendanceModal = () => (
-    <CustomModal
-      isOpen={showEditModal}
-      onClose={() => setShowEditModal(false)}
-      title="Edit Attendance"
-      description={`Update attendance record for ${editingAttendance?.user ?
-        `${editingAttendance.user.firstName} ${editingAttendance.user.lastName}` :
-        editingAttendance?.agent?.agentName}`}
-      size="lg"
-      preventClose={loading.edit}
-    >
-      <form onSubmit={handleUpdateAttendance} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select
-              value={editForm.status}
-              onValueChange={(value) => setEditForm({ ...editForm, status: value })}
+            <Select 
+              value={manualForm.status}
+              onValueChange={(value) => setManualForm({...manualForm, status: value})}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select Status" />
@@ -1562,87 +566,369 @@ export default function AdminAttendancePage() {
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              type="text"
-              value={editingAttendance ? new Date(editingAttendance.date).toLocaleDateString() : ""}
-              disabled
-              className="bg-gray-100"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="checkInTime">Check In Time</Label>
-            <Input
-              type="time"
-              value={editForm.checkInTime}
-              onChange={(e) => setEditForm({ ...editForm, checkInTime: e.target.value })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="checkOutTime">Check Out Time</Label>
-            <Input
-              type="time"
-              value={editForm.checkOutTime}
-              onChange={(e) => setEditForm({ ...editForm, checkOutTime: e.target.value })}
-            />
-          </div>
-        </div>
-
-        {/* <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            value={editForm.notes}
-            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-            placeholder="Additional notes..."
-            rows={3}
-          />
-        </div> */}
-
-        {editingAttendance && (
-          <div className="bg-gray-50 p-3 rounded-lg border">
-            <h4 className="font-medium text-sm mb-2">Current Information:</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-gray-600">Type:</span> {editingAttendance.user ? 'User' : 'Agent'}
-              </div>
-              <div>
-                <span className="text-gray-600">Shift:</span> {editingAttendance.shift?.name || 'No Shift'}
-              </div>
-              <div>
-                <span className="text-gray-600">Current Status:</span>
-                <span className="ml-1 capitalize">{editingAttendance.status}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Late Minutes:</span> {editingAttendance.lateMinutes || 0}
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="checkInTime">Check In Time (Optional)</Label>
+              <Input 
+                type="time" 
+                value={manualForm.checkInTime}
+                onChange={(e) => setManualForm({...manualForm, checkInTime: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="checkOutTime">Check Out Time (Optional)</Label>
+              <Input 
+                type="time" 
+                value={manualForm.checkOutTime}
+                onChange={(e) => setManualForm({...manualForm, checkOutTime: e.target.value})}
+              />
             </div>
           </div>
-        )}
 
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="flex-1" disabled={loading.edit}>
-            {loading.edit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Update Attendance
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowEditModal(false)}
-            className="flex-1"
-            disabled={loading.edit}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </CustomModal>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea 
+              value={manualForm.notes}
+              onChange={(e) => setManualForm({...manualForm, notes: e.target.value})}
+              placeholder="Additional notes..."
+              rows={3}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1" disabled={loading.manual}>
+              {loading.manual && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Attendance
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setShowManualModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 
-  // ✅ STATS CARDS
+  // ✅ Leave Assignment Modal (Fixed)
+  const LeaveModal = () => (
+    <Dialog open={showLeaveModal} onOpenChange={setShowLeaveModal}>
+      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Assign Leave</DialogTitle>
+          <DialogDescription>
+            Assign leave to user or agent
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleAssignLeave} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="userType">User Type</Label>
+              <Select 
+                value={leaveForm.userType}
+                onValueChange={(value) => setLeaveForm({...leaveForm, userType: value, userId: "", agentId: ""})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="agent">Agent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="person">
+                {leaveForm.userType === 'user' ? 'Select User' : 'Select Agent'}
+              </Label>
+              <Select 
+                value={leaveForm.userType === 'user' ? leaveForm.userId : leaveForm.agentId}
+                onValueChange={(value) => setLeaveForm({
+                  ...leaveForm, 
+                  [leaveForm.userType === 'user' ? 'userId' : 'agentId']: value
+                })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${leaveForm.userType === 'user' ? 'User' : 'Agent'}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="select">Select {leaveForm.userType === 'user' ? 'User' : 'Agent'}</SelectItem>
+                  {(leaveForm.userType === 'user' ? users : agents).map(person => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name} ({person.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input 
+                type="date" 
+                value={leaveForm.startDate}
+                onChange={(e) => setLeaveForm({...leaveForm, startDate: e.target.value})}
+                required 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input 
+                type="date" 
+                value={leaveForm.endDate}
+                onChange={(e) => setLeaveForm({...leaveForm, endDate: e.target.value})}
+                required 
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="leaveType">Leave Type</Label>
+            <Select 
+              value={leaveForm.leaveType}
+              onValueChange={(value) => setLeaveForm({...leaveForm, leaveType: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Leave Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sick">Sick Leave</SelectItem>
+                <SelectItem value="casual">Casual Leave</SelectItem>
+                <SelectItem value="emergency">Emergency Leave</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="reason">Reason</Label>
+            <Textarea 
+              value={leaveForm.reason}
+              onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})}
+              placeholder="Reason for leave..."
+              rows={3}
+              required
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1" disabled={loading.assign}>
+              {loading.assign && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Assign Leave
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setShowLeaveModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // ✅ Holiday Creation Modal (Fixed)
+  const HolidayModal = () => (
+    <Dialog open={showHolidayModal} onOpenChange={setShowHolidayModal}>
+      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Create Holiday</DialogTitle>
+          <DialogDescription>
+            Add a new holiday to the system. Recurring holidays will automatically repeat every year.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleCreateHoliday} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Holiday Name *</Label>
+            <Input 
+              type="text" 
+              value={holidayForm.name}
+              onChange={(e) => setHolidayForm({...holidayForm, name: e.target.value})}
+              placeholder="Enter holiday name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Date *</Label>
+            <Input 
+              type="date" 
+              value={holidayForm.date}
+              onChange={(e) => setHolidayForm({...holidayForm, date: e.target.value})}
+              required 
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              value={holidayForm.description}
+              onChange={(e) => setHolidayForm({...holidayForm, description: e.target.value})}
+              placeholder="Holiday description..."
+              rows={3}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isRecurring"
+              checked={holidayForm.isRecurring}
+              onChange={(e) => setHolidayForm({...holidayForm, isRecurring: e.target.checked})}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="isRecurring" className="text-sm">
+              Recurring Holiday (will repeat every year)
+            </Label>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1" disabled={loading.holidays}>
+              {loading.holidays && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Holiday
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setShowHolidayModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // ✅ Weekly Off Modal (Fixed)
+  const WeeklyOffModal = () => (
+    <Dialog open={showWeeklyOffModal} onOpenChange={setShowWeeklyOffModal}>
+      <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Add Weekly Off Day</DialogTitle>
+          <DialogDescription>
+            Set a weekly off day that will automatically mark as off every week
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleCreateWeeklyOff} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="day">Day of Week</Label>
+            <Select 
+              value={weeklyOffForm.day}
+              onValueChange={(value) => setWeeklyOffForm({
+                ...weeklyOffForm, 
+                day: value,
+                name: value.charAt(0).toUpperCase() + value.slice(1)
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sunday">Sunday</SelectItem>
+                <SelectItem value="monday">Monday</SelectItem>
+                <SelectItem value="tuesday">Tuesday</SelectItem>
+                <SelectItem value="wednesday">Wednesday</SelectItem>
+                <SelectItem value="thursday">Thursday</SelectItem>
+                <SelectItem value="friday">Friday</SelectItem>
+                <SelectItem value="saturday">Saturday</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Display Name</Label>
+            <Input 
+              type="text" 
+              value={weeklyOffForm.name}
+              onChange={(e) => setWeeklyOffForm({...weeklyOffForm, name: e.target.value})}
+              placeholder="e.g., Sunday, Weekly Off"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              value={weeklyOffForm.description}
+              onChange={(e) => setWeeklyOffForm({...weeklyOffForm, description: e.target.value})}
+              placeholder="Description for this weekly off..."
+              rows={2}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1" disabled={loading.weeklyOff}>
+              {loading.weeklyOff && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Weekly Off
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setShowWeeklyOffModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // ✅ Auto Attendance Modal (Fixed)
+  const AutoAttendanceModal = () => (
+    <Dialog open={showAutoModal} onOpenChange={setShowAutoModal}>
+      <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle>Process Auto Attendance</DialogTitle>
+          <DialogDescription>
+            Automatically mark absent for users/agents without attendance on the selected date.
+            If the date is a holiday or weekly off, they will be marked accordingly.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleAutoAttendance} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input 
+              type="date" 
+              value={autoForm.date}
+              onChange={(e) => setAutoForm({...autoForm, date: e.target.value})}
+              required 
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1" disabled={loading.auto}>
+              {loading.auto && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Process Auto Attendance
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => setShowAutoModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // ✅ Stats Cards
   const StatsCards = () => (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
       <Card>
@@ -1686,9 +972,9 @@ export default function AdminAttendancePage() {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-yellow-600">
-            {attendance.filter(a =>
-              a.status.includes('leave') ||
-              a.status === 'holiday' ||
+            {attendance.filter(a => 
+              a.status.includes('leave') || 
+              a.status === 'holiday' || 
               a.status === 'weekly_off'
             ).length}
           </div>
@@ -1697,81 +983,78 @@ export default function AdminAttendancePage() {
     </div>
   );
 
-  // // ✅ FILTERS SECTION
-  // const FiltersSection = () => (
-  //   <Card className="mb-6">
-  //     <CardHeader>
-  //       <CardTitle className="text-lg">Filters</CardTitle>
-  //     </CardHeader>
-  //     <CardContent>
-  //       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-  //         <div className="space-y-2">
-  //           <Label htmlFor="userType">User Type</Label>
-  //           <Select
-  //             value={filters.userType}
-  //             onValueChange={(value) => handleFilterChange('userType', value)}
-  //           >
-  //             <SelectTrigger>
-  //               <SelectValue placeholder="All Users" />
-  //             </SelectTrigger>
-  //             <SelectContent>
-  //               <SelectItem value="all">All Users</SelectItem>
-  //               <SelectItem value="user">Users Only</SelectItem>
-  //               <SelectItem value="agent">Agents Only</SelectItem>
-  //             </SelectContent>
-  //           </Select>
-  //         </div>
+  // ✅ Filters Section
+  const FiltersSection = () => (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg">Filters</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="userType">User Type</Label>
+            <Select 
+              value={filters.userType}
+              onValueChange={(value) => handleFilterChange('userType', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Users" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="user">Users Only</SelectItem>
+                <SelectItem value="agent">Agents Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-  //         <div className="space-y-2">
-  //           <Label htmlFor="status">Status</Label>
-  //           <Select
-  //             value={filters.status}
-  //             onValueChange={(value) => handleFilterChange('status', value)}
-  //           >
-  //             <SelectTrigger>
-  //               <SelectValue placeholder="All Status" />
-  //             </SelectTrigger>
-  //             <SelectContent>
-  //               <SelectItem value="all">All Status</SelectItem>
-  //               <SelectItem value="present">Present</SelectItem>
-  //               <SelectItem value="absent">Absent</SelectItem>
-  //               <SelectItem value="leave">Leave</SelectItem>
-  //               <SelectItem value="late">Late</SelectItem>
-  //               <SelectItem value="holiday">Holiday</SelectItem>
-  //               <SelectItem value="weekly_off">Weekly Off</SelectItem>
-  //               <SelectItem value="approved_leave">Approved Leave</SelectItem>
-  //             </SelectContent>
-  //           </Select>
-  //         </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select 
+              value={filters.status}
+              onValueChange={(value) => handleFilterChange('status', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="present">Present</SelectItem>
+                <SelectItem value="absent">Absent</SelectItem>
+                <SelectItem value="leave">Leave</SelectItem>
+                <SelectItem value="late">Late</SelectItem>
+                <SelectItem value="holiday">Holiday</SelectItem>
+                <SelectItem value="weekly_off">Weekly Off</SelectItem>
+                <SelectItem value="approved_leave">Approved Leave</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-  //         <div className="space-y-2">
-  //           <Label htmlFor="date">Date</Label>
-  //           <Input
-  //             type="date"
-  //             value={filters.date}
-  //             onChange={(e) => handleFilterChange('date', e.target.value)}
-  //           />
-  //         </div>
+          <div className="space-y-2">
+            <Label htmlFor="date">Date</Label>
+            <Input 
+              type="date" 
+              value={filters.date}
+              onChange={(e) => handleFilterChange('date', e.target.value)}
+            />
+          </div>
 
-  //         <div className="space-y-2">
-  //           <Label htmlFor="clear">&nbsp;</Label>
-  //           <Button
-  //             onClick={() => {
-  //               setFilters({ userType: "all", status: "all", date: "" });
-  //               setPage(1);
-  //             }}
-  //             variant="outline"
-  //             className="w-full"
-  //           >
-  //             Clear Filters
-  //           </Button>
-  //         </div>
-  //       </div>
-  //     </CardContent>
-  //   </Card>
-  // );
+          <div className="space-y-2">
+            <Label htmlFor="clear">&nbsp;</Label>
+            <Button
+              onClick={() => setFilters({ userType: "all", status: "all", date: "" })}
+              variant="outline"
+              className="w-full"
+            >
+              Clear Filters
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-  // ✅ HOLIDAYS MANAGEMENT SECTION
+  // ✅ Holidays Management Section
   const HolidaysSection = () => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -1787,21 +1070,62 @@ export default function AdminAttendancePage() {
         </Button>
       </CardHeader>
       <CardContent>
-        <GlobalData
-          title=""
-          fetcher={async () => attendanceService.getHolidays()}
-          columns={holidayColumns}
-          rowsPerPage={5}
-          serverSide={false}
-          searchEnabled={false}
-          filterKeys={["isRecurring"]}
-          filterOptionsMap={holidayFilterOptionsMap}
-        />
+        {loading.holidays ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2">Loading holidays...</span>
+          </div>
+        ) : holidays.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No holidays found.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Recurring</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {holidays.map((holiday) => (
+                <TableRow key={holiday._id}>
+                  <TableCell className="font-medium">{holiday.name}</TableCell>
+                  <TableCell>
+                    {new Date(holiday.date).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="max-w-xs truncate" title={holiday.description}>
+                      {holiday.description || "—"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={holiday.isRecurring ? "default" : "secondary"}>
+                      {holiday.isRecurring ? "Yes" : "No"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteHoliday(holiday._id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );
 
-  // ✅ WEEKLY OFF MANAGEMENT SECTION
+  // ✅ Weekly Off Management Section
   const WeeklyOffSection = () => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -1817,31 +1141,77 @@ export default function AdminAttendancePage() {
         </Button>
       </CardHeader>
       <CardContent>
-        <GlobalData
-          title=""
-          fetcher={async () => weeklyOffService.getAll()}
-          columns={weeklyOffColumns}
-          rowsPerPage={5}
-          serverSide={false}
-          searchEnabled={false}
-          filterKeys={["isActive"]}
-          filterOptionsMap={weeklyOffFilterOptionsMap}
-        />
+        {loading.weeklyOff ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2">Loading weekly off days...</span>
+          </div>
+        ) : weeklyOffs.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No weekly off days configured. Add Sunday, Friday, or other weekly off days.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Day</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {weeklyOffs.map((weeklyOff) => (
+                <TableRow key={weeklyOff._id}>
+                  <TableCell className="font-medium capitalize">{weeklyOff.day}</TableCell>
+                  <TableCell>{weeklyOff.name}</TableCell>
+                  <TableCell>
+                    <div className="max-w-xs truncate" title={weeklyOff.description}>
+                      {weeklyOff.description || "—"}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={weeklyOff.isActive ? "default" : "secondary"}>
+                      {weeklyOff.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={weeklyOff.isActive ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => handleToggleWeeklyOff(weeklyOff._id, !weeklyOff.isActive)}
+                      >
+                        {weeklyOff.isActive ? <ToggleLeft className="h-4 w-4 mr-1" /> : <ToggleRight className="h-4 w-4 mr-1" />}
+                        {weeklyOff.isActive ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteWeeklyOff(weeklyOff._id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   );
 
-  // ✅ MAIN COMPONENT RENDER
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* All Modals */}
+      {/* Modals */}
       <ManualAttendanceModal />
       <LeaveModal />
       <HolidayModal />
       <WeeklyOffModal />
       <AutoAttendanceModal />
-      <ShiftAutoAttendanceModal />
-      <EditAttendanceModal />
 
       {/* Header */}
       <div className="flex justify-between items-center">
@@ -1863,41 +1233,22 @@ export default function AdminAttendancePage() {
           >
             Manual Entry
           </Button>
-          <div className="relative group">
-            <Button
-              onClick={() => setShowShiftAutoModal(true)}
-              variant="outline"
-              className="border-green-600 text-green-600 hover:bg-green-50"
-            >
-              <PlayCircle className="h-4 w-4 mr-2" />
-              Auto Attendance
-            </Button>
-            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-48 bg-gray-800 text-white text-sm rounded p-2 z-10">
-              Click for shift-based auto attendance
-            </div>
-          </div>
-          {/* <Button
+          <Button
             onClick={() => setShowAutoModal(true)}
             variant="outline"
             className="border-blue-600 text-blue-600 hover:bg-blue-50"
           >
             <PlayCircle className="h-4 w-4 mr-2" />
-            Simple Auto
-          </Button> */}
-          <Link
-            href={'/api/attendance/export'}
+            Auto Attendance
+          </Button>
+          <a
+            href="/api/attendance/export"
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition flex items-center"
           >
-            <Button
-              className="border-purple-600 text-blue-600 hover:bg-blue-50"
-              variant="outline"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-          </Link>
-
+            Export CSV
+          </a>
           <Button
-            onClick={() => fetchAttendance(1)}
+            onClick={() => fetchAttendance(page)}
             variant="outline"
           >
             Refresh
@@ -1923,7 +1274,7 @@ export default function AdminAttendancePage() {
         </TabsList>
 
         <TabsContent value="attendance" className="space-y-6">
-          {/* <FiltersSection /> */}
+          <FiltersSection />
           <StatsCards />
 
           <Card>
@@ -1934,22 +1285,111 @@ export default function AdminAttendancePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <GlobalData
-                title="Attendance Records"
-                fetcher={async ({ page, limit, search, ...rest } = {}) => {
-                  // flatten params to what adminService expects
-                  const params = { page: page || 1, limit: limit || 10, ...rest };
-                  if (search) params.search = search;
-                  return await adminService.getAllAttendance(params);
-                }}
-                columns={attendanceColumns}
-                serverSide={true}
-                rowsPerPage={5}
-                searchEnabled={true}
-                filterKeys={["userType", "status"]}
-                filterOptionsMap={attendanceFilterOptionsMap}
-                initialFilters={{ userType: "all", status: "all" }}
-              />
+              {loading.attendance ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2">Loading attendance records...</span>
+                </div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Shift</TableHead>
+                        <TableHead>Check In</TableHead>
+                        <TableHead>Check Out</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Remarks</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendance.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                            No attendance records found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        attendance.map((a) => (
+                          <TableRow key={a._id}>
+                            <TableCell>
+                              <Badge variant={a.user ? "default" : "secondary"}>
+                                {a.user ? 'User' : 'Agent'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {a.user 
+                                ? `${a.user?.firstName || ''} ${a.user?.lastName || ''}`
+                                : a.agent?.agentName || '—'
+                              }
+                            </TableCell>
+                            <TableCell>{a.shift?.name || "—"}</TableCell>
+                            <TableCell>
+                              {a.checkInTime
+                                ? new Date(a.checkInTime).toLocaleTimeString()
+                                : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {a.checkOutTime
+                                ? new Date(a.checkOutTime).toLocaleTimeString()
+                                : "—"}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(a.status)}</TableCell>
+                            <TableCell>
+                              {a.isLate ? (
+                                <span className="text-yellow-600 text-sm">
+                                  Late ({a.lateMinutes}m)
+                                </span>
+                              ) : a.isOvertime ? (
+                                <span className="text-green-600 text-sm">
+                                  Overtime (+{a.overtimeMinutes}m)
+                                </span>
+                              ) : a.leaveReason ? (
+                                <span className="text-blue-600 text-sm">
+                                  {a.leaveType}: {a.leaveReason}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(a.createdAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+
+                  {/* Pagination */}
+                  {meta.totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-3 mt-6">
+                      <Button
+                        onClick={goToPrevPage}
+                        disabled={page === 1}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Page {page} of {meta.totalPages} ({meta.total} records)
+                      </span>
+                      <Button
+                        onClick={goToNextPage}
+                        disabled={page === meta.totalPages}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1963,16 +1403,90 @@ export default function AdminAttendancePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <GlobalData
-                title=""
-                fetcher={async () => attendanceService.getAllLeaveRequests("all")}
-                columns={leaveColumns}
-                rowsPerPage={5}
-                serverSide={false}
-                searchEnabled={true}
-                filterKeys={["userType", "status"]}
-                filterOptionsMap={leaveFilterOptionsMap}
-              />
+              {loading.leave ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2">Loading leave requests...</span>
+                </div>
+              ) : leaveRequests.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No leave requests found.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Leave Type</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {leaveRequests.map((request) => (
+                      <TableRow key={request._id}>
+                        <TableCell>
+                          <Badge variant={request.user ? "default" : "secondary"}>
+                            {request.user ? 'User' : 'Agent'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {request.user 
+                            ? `${request.user?.firstName || ''} ${request.user?.lastName || ''}`
+                            : request.agent?.agentName || '—'
+                          }
+                          <div className="text-xs text-muted-foreground">
+                            {request.user ? request.user.email : request.agent?.email}
+                          </div>
+                        </TableCell>
+                        <TableCell className="capitalize">{request.leaveType}</TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="max-w-xs" title={request.reason}>
+                            {request.reason}
+                          </div>
+                        </TableCell>
+                        <TableCell>{getLeaveStatusBadge(request.status)}</TableCell>
+                        <TableCell>
+                          {request.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleLeaveAction(request._id, 'approved')}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  const comments = prompt('Rejection reason:');
+                                  if (comments !== null) {
+                                    handleLeaveAction(request._id, 'rejected', comments);
+                                  }
+                                }}
+                                size="sm"
+                                variant="destructive"
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                          {request.status !== 'pending' && (
+                            <span className="text-sm text-muted-foreground">
+                              Reviewed by {request.reviewedBy?.firstName}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1988,3 +1502,8 @@ export default function AdminAttendancePage() {
     </div>
   );
 }
+
+
+
+
+

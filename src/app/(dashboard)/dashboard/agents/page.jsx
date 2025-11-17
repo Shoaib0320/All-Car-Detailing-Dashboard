@@ -1,10 +1,8 @@
-// src/app/agents/page.js
 'use client';
 import { useState, useEffect } from 'react';
 import { agentService } from '@/services/agentService';
 import { shiftService } from '@/services/shiftService';
 import { toast } from 'sonner';
-import { ResetPasswordDialog } from '@/components/ResetPasswordDialog';
 
 // Shadcn UI Components
 import { Button } from '@/components/ui/button';
@@ -56,8 +54,7 @@ export default function AgentsPage() {
     agentId: '',
     shift: '',
     email: '',
-    password: '',
-    monthlyTarget: ''
+    password: ''
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -66,14 +63,14 @@ export default function AgentsPage() {
     agentId: '',
     shift: '',
     email: '',
-    monthlyTarget: '',
     isActive: true
   });
 
+  // Available shifts (backend se fetch hongi)
   const [shifts, setShifts] = useState([]);
   const [shiftsLoading, setShiftsLoading] = useState(false);
 
-  // Fetch shifts
+  // Fetch shifts from backend
   const fetchShifts = async () => {
     setShiftsLoading(true);
     try {
@@ -162,6 +159,8 @@ export default function AgentsPage() {
   // Create new agent
   const handleCreateAgent = async (e) => {
     e.preventDefault();
+    
+    // Validation
     if (!formData.shift) {
       toast.warning('Please select a shift');
       return;
@@ -177,10 +176,9 @@ export default function AgentsPage() {
         agentId: '',
         shift: '',
         email: '',
-        password: '',
-        monthlyTarget: ''
+        password: ''
       });
-      fetchAgents();
+      fetchAgents(); // Refresh list
     } catch (error) {
       console.error('Error creating agent:', error);
       toast.error(error.response?.data?.error || 'Error creating agent');
@@ -192,6 +190,8 @@ export default function AgentsPage() {
   // Edit agent
   const handleEditAgent = async (e) => {
     e.preventDefault();
+    
+    // Validation
     if (!editFormData.shift) {
       toast.warning('Please select a shift');
       return;
@@ -204,7 +204,6 @@ export default function AgentsPage() {
         agentId: editFormData.agentId,
         shift: editFormData.shift,
         email: editFormData.email,
-        monthlyTarget: editFormData.monthlyTarget,
         isActive: editFormData.isActive
       });
       toast.success('Agent updated successfully!');
@@ -215,10 +214,9 @@ export default function AgentsPage() {
         agentId: '',
         shift: '',
         email: '',
-        monthlyTarget: '',
         isActive: true
       });
-      fetchAgents();
+      fetchAgents(); // Refresh list
     } catch (error) {
       console.error('Error updating agent:', error);
       toast.error(error.response?.data?.error || 'Error updating agent');
@@ -235,7 +233,6 @@ export default function AgentsPage() {
       agentId: agent.agentId,
       shift: agent.shift?._id || '',
       email: agent.email,
-      monthlyTarget: agent.monthlyTarget || 0,
       isActive: agent.isActive
     });
     setShowEditForm(true);
@@ -248,7 +245,7 @@ export default function AgentsPage() {
     try {
       await agentService.deleteAgent(agentId);
       toast.success('Agent deleted successfully');
-      fetchAgents();
+      fetchAgents(); // Refresh list
     } catch (error) {
       console.error('Error deleting agent:', error);
       toast.error('Error deleting agent');
@@ -260,7 +257,7 @@ export default function AgentsPage() {
     try {
       await agentService.updateAgentStatus(agentId, !currentStatus);
       toast.success(`Agent ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-      fetchAgents();
+      fetchAgents(); // Refresh list
     } catch (error) {
       console.error('Error updating agent status:', error);
       toast.error('Error updating status');
@@ -275,8 +272,6 @@ export default function AgentsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Agent Management</h1>
           <p className="text-gray-600 mt-1">Manage all agents and their shifts</p>
         </div>
-        
-        {/* Create Agent Dialog */}
         <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
@@ -290,8 +285,9 @@ export default function AgentsPage() {
                 Add a new agent to the system. A welcome email will be sent with login credentials.
               </DialogDescription>
             </DialogHeader>
-
+            
             <form onSubmit={handleCreateAgent} className="space-y-4">
+              {/* Agent Name */}
               <div className="space-y-2">
                 <Label htmlFor="agentName">Agent Name</Label>
                 <Input
@@ -304,6 +300,7 @@ export default function AgentsPage() {
                 />
               </div>
 
+              {/* Agent ID */}
               <div className="space-y-2">
                 <Label htmlFor="agentId">Agent ID</Label>
                 <Input
@@ -316,10 +313,11 @@ export default function AgentsPage() {
                 />
               </div>
 
+              {/* Shift Selection */}
               <div className="space-y-2">
                 <Label htmlFor="shift">Shift</Label>
-                <Select
-                  value={formData.shift}
+                <Select 
+                  value={formData.shift} 
                   onValueChange={(value) => handleSelectChange('shift', value)}
                   disabled={shiftsLoading}
                 >
@@ -334,14 +332,20 @@ export default function AgentsPage() {
                     ) : (
                       shifts.map(shift => (
                         <SelectItem key={shift._id} value={shift._id}>
-                          {shift.name} ({shift.startTime} - {shift.endTime})
+                          {shift.shiftName} ({shift.startTime} - {shift.endTime})
                         </SelectItem>
                       ))
                     )}
                   </SelectContent>
                 </Select>
+                {shifts.length === 0 && !shiftsLoading && (
+                  <p className="text-red-500 text-sm">
+                    No shifts available. Please create shifts first.
+                  </p>
+                )}
               </div>
 
+              {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -355,19 +359,7 @@ export default function AgentsPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="monthlyTarget">Monthly Target</Label>
-                <Input
-                  id="monthlyTarget"
-                  name="monthlyTarget"
-                  type="number"
-                  value={formData.monthlyTarget}
-                  onChange={handleInputChange}
-                  placeholder="Enter monthly sales target"
-                  min="0"
-                />
-              </div>
-
+              {/* Password */}
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="flex gap-2">
@@ -380,9 +372,9 @@ export default function AgentsPage() {
                     required
                     placeholder="Generate or enter password"
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
+                  <Button 
+                    type="button" 
+                    variant="outline" 
                     onClick={generatePassword}
                   >
                     Generate
@@ -412,8 +404,124 @@ export default function AgentsPage() {
         </Dialog>
       </div>
 
+      {/* Edit Agent Dialog */}
+      <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Agent</DialogTitle>
+            <DialogDescription>
+              Update agent information and settings.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleEditAgent} className="space-y-4">
+            {/* Agent Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-agentName">Agent Name</Label>
+              <Input
+                id="edit-agentName"
+                name="agentName"
+                value={editFormData.agentName}
+                onChange={handleEditInputChange}
+                required
+                placeholder="Enter agent full name"
+              />
+            </div>
+
+            {/* Agent ID */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-agentId">Agent ID</Label>
+              <Input
+                id="edit-agentId"
+                name="agentId"
+                value={editFormData.agentId}
+                onChange={handleEditInputChange}
+                required
+                placeholder="Enter unique agent ID"
+              />
+            </div>
+
+            {/* Shift Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-shift">Shift</Label>
+              <Select 
+                value={editFormData.shift} 
+                onValueChange={(value) => handleEditSelectChange('shift', value)}
+                disabled={shiftsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a shift" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shiftsLoading ? (
+                    <SelectItem value="loading" disabled>Loading shifts...</SelectItem>
+                  ) : shifts.length === 0 ? (
+                    <SelectItem value="none" disabled>No shifts available</SelectItem>
+                  ) : (
+                    shifts.map(shift => (
+                      <SelectItem key={shift._id} value={shift._id}>
+                        {shift.shiftName} ({shift.startTime} - {shift.endTime})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                name="email"
+                type="email"
+                value={editFormData.email}
+                onChange={handleEditInputChange}
+                required
+                placeholder="Enter agent email address"
+              />
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select 
+                value={editFormData.isActive.toString()} 
+                onValueChange={(value) => handleEditSelectChange('isActive', value === 'true')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Active</SelectItem>
+                  <SelectItem value="false">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-blue-600 hover:bg-blue-700"
+              >
+                {loading ? 'Updating...' : 'Update Agent'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowEditForm(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Search Bar */}
-      {/* <Card>
+      <Card>
         <CardContent className="p-4">
           <div className="relative">
             <Input
@@ -430,9 +538,9 @@ export default function AgentsPage() {
             </div>
           </div>
         </CardContent>
-      </Card> */}
+      </Card>
 
-      {/* Agents Table - Only table will have horizontal scroll */}
+      {/* Agents List */}
       <Card>
         <CardHeader>
           <CardTitle>Agents</CardTitle>
@@ -442,141 +550,111 @@ export default function AgentsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-10">
+            <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-gray-600 mt-2">Loading agents...</p>
             </div>
           ) : agents.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-8">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No agents found</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No agents</h3>
               <p className="mt-1 text-sm text-gray-500">
                 Get started by creating a new agent.
               </p>
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
-              {/* Table container with horizontal scroll */}
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-gray-50">
-                    <TableRow>
-                      <TableHead className="font-semibold text-gray-800 whitespace-nowrap">Agent Details</TableHead>
-                      <TableHead className="font-semibold text-gray-800 whitespace-nowrap">Shift</TableHead>
-                      <TableHead className="font-semibold text-gray-800 whitespace-nowrap">Monthly Target</TableHead>
-                      <TableHead className="font-semibold text-gray-800 whitespace-nowrap">Status</TableHead>
-                      <TableHead className="font-semibold text-gray-800 text-right whitespace-nowrap">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {agents.map((agent) => (
-                      <TableRow key={agent._id} className="hover:bg-gray-50">
-                        {/* Agent Details - Combined in one column like before */}
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium text-gray-900">
-                              {agent.agentName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              ID: {agent.agentId}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {agent.email}
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              Created: {new Date(agent.createdAt).toLocaleDateString()}
-                            </div>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Agent Details</TableHead>
+                    <TableHead>Shift</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agents.map((agent) => (
+                    <TableRow key={agent._id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium text-gray-900">
+                            {agent.agentName}
                           </div>
-                        </TableCell>
-
-                        {/* Shift */}
-                        <TableCell>
-                          {agent.shift ? (
-                            <div className="space-y-1">
-                              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                                {agent.shift.name}
-                              </Badge>
-                              <div className="text-xs text-gray-500">
-                                {agent.shift.startTime} - {agent.shift.endTime}
-                              </div>
-                            </div>
-                          ) : (
-                            <Badge variant="outline" className="bg-gray-100 text-gray-800">
-                              No Shift
-                            </Badge>
-                          )}
-                        </TableCell>
-
-                        {/* Monthly Target */}
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-semibold text-gray-800">
-                              {agent.monthlyTarget ? `${agent.monthlyTarget}` : '—'}
-                            </div>
-                            <div className="text-xs text-gray-500">Target / Month</div>
+                          <div className="text-sm text-gray-500">
+                            ID: {agent.agentId}
                           </div>
-                        </TableCell>
-
-                        {/* Status */}
-                        <TableCell>
-                          <Badge
-                            variant={agent.isActive ? "default" : "secondary"}
-                            className={agent.isActive
-                              ? "bg-green-100 text-green-800 hover:bg-green-100"
-                              : "bg-red-100 text-red-800 hover:bg-red-100"
+                          <div className="text-sm text-gray-500">
+                            {agent.email}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            Created: {new Date(agent.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {agent.shift ? (
+                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                            {agent.shift.shiftName}
+                            <span className="ml-1 text-xs">
+                              ({agent.shift.startTime} - {agent.shift.endTime})
+                            </span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+                            No Shift
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={agent.isActive ? "default" : "secondary"}
+                          className={agent.isActive 
+                            ? "bg-green-100 text-green-800 hover:bg-green-100" 
+                            : "bg-red-100 text-red-800 hover:bg-red-100"
+                          }
+                        >
+                          {agent.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenEdit(agent)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleStatus(agent._id, agent.isActive)}
+                            className={
+                              agent.isActive 
+                                ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50' 
+                                : 'text-green-600 hover:text-green-700 hover:bg-green-50'
                             }
                           >
-                            {agent.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-
-                        {/* Actions */}
-                        <TableCell>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenEdit(agent)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            >
-                              Edit
-                            </Button>
-                            
-                            <ResetPasswordDialog 
-                              agent={agent} 
-                              onSuccess={fetchAgents}
-                            />
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleToggleStatus(agent._id, agent.isActive)}
-                              className={
-                                agent.isActive
-                                  ? 'text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50'
-                                  : 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                              }
-                            >
-                              {agent.isActive ? 'Deactivate' : 'Activate'}
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteAgent(agent._id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                            {agent.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteAgent(agent._id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
 
@@ -612,119 +690,6 @@ export default function AgentsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Edit Agent Dialog */}
-      <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Agent</DialogTitle>
-            <DialogDescription>
-              Update agent information and settings.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleEditAgent} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-agentName">Agent Name</Label>
-              <Input
-                id="edit-agentName"
-                name="agentName"
-                value={editFormData.agentName}
-                onChange={handleEditInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-agentId">Agent ID</Label>
-              <Input
-                id="edit-agentId"
-                name="agentId"
-                value={editFormData.agentId}
-                onChange={handleEditInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-shift">Shift</Label>
-              <Select
-                value={editFormData.shift}
-                onValueChange={(value) => handleEditSelectChange('shift', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a shift" />
-                </SelectTrigger>
-                <SelectContent>
-                  {shifts.map(shift => (
-                    <SelectItem key={shift._id} value={shift._id}>
-                      {shift.name} ({shift.startTime} - {shift.endTime})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                name="email"
-                type="email"
-                value={editFormData.email}
-                onChange={handleEditInputChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-monthlyTarget">Monthly Target</Label>
-              <Input
-                id="edit-monthlyTarget"
-                name="monthlyTarget"
-                type="number"
-                value={editFormData.monthlyTarget}
-                onChange={handleEditInputChange}
-                min="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-status">Status</Label>
-              <Select
-                value={editFormData.isActive.toString()}
-                onValueChange={(value) => handleEditSelectChange('isActive', value === 'true')}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Active</SelectItem>
-                  <SelectItem value="false">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-              >
-                {loading ? 'Updating...' : 'Update Agent'}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowEditForm(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

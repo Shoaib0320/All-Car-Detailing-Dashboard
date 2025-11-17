@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -90,14 +92,30 @@ export default function ContactsPage() {
 
     setIsSendingReply(true);
     try {
-      // Simulate sending reply (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Send reply via API
+      const response = await fetch("/api/contact/reply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contactId: selectedContact._id,
+          subject: replySubject,
+          message: replyMessage,
+        }),
+      });
 
-      // Update contact status to "In Progress" or "Resolved"
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send reply");
+      }
+
+      // Update contact status in local state
       setContacts(prevContacts =>
         prevContacts.map(contact =>
           contact._id === selectedContact._id
-            ? { ...contact, status: "In Progress" }
+            ? { ...contact, status: "replied" }
             : contact
         )
       );
@@ -268,9 +286,11 @@ export default function ContactsPage() {
                       </h3>
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
-                          contact.status === "New"
+                          contact.status === "new"
                             ? "bg-blue-100 text-blue-700"
-                            : contact.status === "In Progress"
+                            : contact.status === "replied"
+                            ? "bg-purple-100 text-purple-700"
+                            : contact.status === "read"
                             ? "bg-yellow-100 text-yellow-700"
                             : "bg-green-100 text-green-700"
                         }`}
@@ -355,10 +375,12 @@ export default function ContactsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              contact.status === "New"
+                        className={`px-2 py-1 text-xs rounded-full ${
+                              contact.status === "new"
                                 ? "bg-blue-100 text-blue-700"
-                                : contact.status === "In Progress"
+                                : contact.status === "replied"
+                                ? "bg-purple-100 text-purple-700"
+                                : contact.status === "read"
                                 ? "bg-yellow-100 text-yellow-700"
                                 : "bg-green-100 text-green-700"
                             }`}
@@ -444,10 +466,12 @@ export default function ContactsPage() {
                       <div>
                         <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Status</p>
                         <span
-                          className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ${
-                            selectedContact.status === "New"
+                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full ${
+                            selectedContact.status === "new"
                               ? "bg-blue-100 text-blue-800"
-                              : selectedContact.status === "In Progress"
+                              : selectedContact.status === "replied"
+                              ? "bg-purple-100 text-purple-800"
+                              : selectedContact.status === "read"
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-green-100 text-green-800"
                           }`}
